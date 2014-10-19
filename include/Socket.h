@@ -4,7 +4,7 @@
  * \date October 2015 
  * \brief General purpose UDP sockets
  *----------------------------------------------------------------------------*/
-
+#include <iostream>
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -40,13 +40,13 @@ class Socket
    * \fn virtual bool send()
    * \brief
    */
-  virtual int send(char *buffer, unsigned buffer_size)=0;
+  virtual int send(char *buffer, size_t buffer_size)=0;
 
   /**
    * \fn virtual bool receive()
    * \brief
    */
-  virtual int receive(char *buffer, unsigned buffer_size)=0;
+  virtual int receive(char *buffer, size_t buffer_size)=0;
 
  protected:
   int sock, port;
@@ -65,9 +65,9 @@ class ClientSocket : public Socket
 
   virtual int init();
   
-  virtual int send(char *buf, unsigned buf_size);
+  virtual int send(char *buf, size_t buf_size);
 
-  virtual int receive(char *buf, unsigned buf_size);
+  virtual int receive(char *buf, size_t buf_size);
   
   int configure_timeout(unsigned to_sec, unsigned to_usec); 
 
@@ -83,9 +83,9 @@ class ServerSocket : public Socket
 
   virtual int init();
 
-  virtual int send(char *buf, unsigned buf_size);
+  virtual int send(char *buf, size_t buf_size);
   
-  virtual int receive(char *buf, unsigned buf_size);
+  virtual int receive(char *buf, size_t buf_size);
 
  private:
 

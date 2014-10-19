@@ -14,6 +14,8 @@ int ClientSocket::init()
   }
 
   // resolve server hostname
+  server.sin_family = AF_INET;
+  std::cout << hostname << "\n";
   struct hostent *hp = gethostbyname(hostname);
   if (hp == 0)
   {
@@ -24,7 +26,6 @@ int ClientSocket::init()
   // setup rest of server info
   bcopy((char *)hp->h_addr, (char *)&server.sin_addr,hp->h_length);
   server.sin_port = htons(port);
-  server.sin_family = AF_INET;
   length = sizeof(struct sockaddr_in);
 
   // return succesfully
@@ -45,7 +46,7 @@ int ClientSocket::configure_timeout(unsigned to_sec, unsigned to_usec)
   return 0;
 }
 
-int ClientSocket::send(char *buf, unsigned buf_size)
+int ClientSocket::send(char *buf, size_t buf_size)
 {
   int rc = sendto(sock,buf,buf_size,0,(const struct sockaddr *)&server,length);
   if (rc < 0)
@@ -57,7 +58,7 @@ int ClientSocket::send(char *buf, unsigned buf_size)
   return 0;
 }
 
-int ClientSocket::receive(char *buf, unsigned buf_size)
+int ClientSocket::receive(char *buf, size_t buf_size)
 {
   int rc = recvfrom(sock,buf,buf_size,0,(struct sockaddr *)&from, &length);
   if (rc < 0)
@@ -98,7 +99,7 @@ int ServerSocket::init()
   return 0;
 }
 
-int ServerSocket::send(char *buf, unsigned buf_size)
+int ServerSocket::send(char *buf, size_t buf_size)
 {
   int rc = sendto(sock,buf,buf_size,0,(struct sockaddr *)&from,length);
   if (rc < 0)
@@ -110,7 +111,7 @@ int ServerSocket::send(char *buf, unsigned buf_size)
   return 0;
 }
 
-int ServerSocket::receive(char *buf, unsigned buf_size)
+int ServerSocket::receive(char *buf, size_t buf_size)
 {
   int rc = recvfrom(sock,buf,buf_size,0,(struct sockaddr *)&from,&length);
   if (rc < 0)

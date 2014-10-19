@@ -17,7 +17,7 @@ LFLAGS= -Wall -ansi -O0
 all: $(BINDIR)/Server $(BINDIR)/Client
 
 $(BINDIR)/Server: $(OBJDIR)/$(OBJS) $(OBJDIR)/Server.o
-	$(CXX) $(addprefix $(OBJDIR)/, $(OBJS) Server.o) -o $@ $($LFLAGS)
+	$(CXX) $(addprefix $(OBJDIR)/, $(OBJS) Server.o) -o $@ $(LFLAGS)
 
 $(BINDIR)/Client : $(OBJDIR)/$(OBJS) $(OBJDIR)/Client.o
 	$(CXX) $(addprefix $(OBJDIR)/, $(OBJS) Client.o) -o $@ $(LFLAGS)

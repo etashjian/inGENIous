@@ -16,7 +16,7 @@ int main(int argc, char **argv)
   }
 
   // setup socket
-  ClientSocket s(atoi(argv[1]), argv[2]);
+  ClientSocket s(atoi(argv[2]), argv[1]);
   s.init();
 
   // send/receive sequence numbers
