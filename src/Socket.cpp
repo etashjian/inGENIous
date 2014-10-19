@@ -15,7 +15,6 @@ int ClientSocket::init()
 
   // resolve server hostname
   server.sin_family = AF_INET;
-  std::cout << hostname << "\n";
   struct hostent *hp = gethostbyname(hostname);
   if (hp == 0)
   {

@@ -26,4 +26,6 @@ $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INCDIR)/*.h
 	$(CXX) -c $< -o $@ $(CPPFLAGS)
 
 clean:
-	rm -rf $(BINDIR)/* $(OBJDIR)/*
+	rm -rf $(BINDIR) $(OBJDIR)
+
+$(shell mkdir -p $(BINDIR) $(OBJDIR))

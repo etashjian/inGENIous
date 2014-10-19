@@ -4,7 +4,6 @@
  * \date October 2015 
  * \brief General purpose UDP sockets
  *----------------------------------------------------------------------------*/
-#include <iostream>
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
