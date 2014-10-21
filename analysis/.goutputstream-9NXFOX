@@ -1,0 +1,12 @@
+# Gnuplot script file for plotting frame times line
+set autoscale
+unset log
+unset label
+set xtic auto
+set ytic auto
+set title "Frame arrival time"
+set xlabel "Time (seconds)"
+set ylabel "Frame Number"
+
+plot "data1.test", (x-1)
+pause -1
