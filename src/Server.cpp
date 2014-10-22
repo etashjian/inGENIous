@@ -30,7 +30,7 @@ int main (int argc, char **argv)
   {
     // wait for start message
     s.receive(buf, 128);
-    cout << "Received a datagram: " << buf << "\n";
+    cout << "Received a datagram\n";
 
     PKT_CMD cmd = static_cast<PKT_CMD>(*buf);
     switch(cmd)
