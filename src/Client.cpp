@@ -1,3 +1,9 @@
+/**---------------------------------*-c++-*-------------------------------------
+ * \file Client.cpp
+ * \author Edward Tashjian, Addison Floyd
+ * \date October 2015
+ * \brief Implenetation of Client executable
+ *----------------------------------------------------------------------------*/
 #include "Client.h"
 
 using std::cout;

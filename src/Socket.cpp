@@ -1,3 +1,9 @@
+/**---------------------------------*-c++-*-------------------------------------
+ * \file Socket.cpp
+ * \author Edward Tashjian, Addison Floyd
+ * \date October 2015
+ * \brief Definitions for Socket classes for client/server model
+ *----------------------------------------------------------------------------*/
 #include "Socket.h"
 
 ////////////////////////////////////////////////////////////////////////////////

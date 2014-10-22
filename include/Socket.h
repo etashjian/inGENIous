@@ -1,6 +1,6 @@
 /**---------------------------------*-c++-*-------------------------------------
  * \file Socket.h
- * \author Edward Tashjian
+ * \author Edward Tashjian, Addison Floyd
  * \date October 2015 
  * \brief General purpose UDP sockets
  *----------------------------------------------------------------------------*/

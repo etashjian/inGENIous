@@ -2,7 +2,7 @@ OBJDIR = obj
 BINDIR = bin
 SRCDIR = src
 INCDIR = include
-OBJS = Socket.o
+OBJS = Socket.o Scheduler.o
 
 CXX=g++
 #CPPFLAGS= -Wall -ansi -g -O0 -std=c++11
@@ -16,10 +16,10 @@ LFLAGS= -Wall -ansi -O0
 
 all: $(BINDIR)/Server $(BINDIR)/Client
 
-$(BINDIR)/Server: $(OBJDIR)/$(OBJS) $(OBJDIR)/Server.o
+$(BINDIR)/Server: $(addprefix $(OBJDIR)/, $(OBJS) Server.o)
 	$(CXX) $(addprefix $(OBJDIR)/, $(OBJS) Server.o) -o $@ $(LFLAGS)
 
-$(BINDIR)/Client : $(OBJDIR)/$(OBJS) $(OBJDIR)/Client.o
+$(BINDIR)/Client : $(addprefix $(OBJDIR)/, $(OBJS) Client.o)
 	$(CXX) $(addprefix $(OBJDIR)/, $(OBJS) Client.o) -o $@ $(LFLAGS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INCDIR)/*.h
