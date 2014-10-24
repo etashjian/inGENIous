@@ -11,9 +11,6 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv)
 {
-  vector<ClientSocket> sockets;
-  int rc = 0;
-
   // check args
   if (argc != 2)
   {
@@ -22,16 +19,26 @@ int main(int argc, char **argv)
   }
 
   // setup sockets
+  vector<ClientSocket> sockets;
   if (parse_config_file("client.cfg", sockets))
   {
     cerr << "Config file parse failed!\n";
     exit(-1);
   }
 
-  // initialize servers
-  if ((rc = init_servers(argv[1], sockets)))
+  // launch threads
+  vector<SocketInterface> ifs;
+  vector<pthread_t> threads(sockets.size());
+  if (start_servers(ifs, threads, sockets, argv[1]))
   {
-    cerr << "Failed to init server " << rc << "!\n";
+    cerr << "Failed to start servers!\n";
+    exit(-1);
+  }
+
+  // stream file
+  if (stream_file(ifs, threads))
+  {
+    cerr << "Failed to stream file!\n";
     exit(-1);
   }
 
@@ -63,30 +70,75 @@ int parse_config_file(const char *filename, vector<ClientSocket>& sockets)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int init_servers(const char *file, std::vector<ClientSocket>& sockets)
+int start_servers(vector<SocketInterface>& ifs,
+                  vector<pthread_t>& threads,
+                  vector<ClientSocket>& sockets,
+                  char *file)
+{
+  // Initialize threads
+  int rc = 0;
+  for(unsigned i = 0; i < sockets.size(); i++)
+  {
+    ifs.push_back(SocketInterface(file, sockets[i]));
+    rc = pthread_create(&threads[i], nullptr, server_thread, (void*) &ifs[i]);
+    if(rc)
+    {
+      cerr << "Error code " << rc << " occured creating thread " << i << "!\n";
+      return -1;
+    }
+  }
+
+  // wait for ready signals
+  for(unsigned i = 0; i < sockets.size(); i++)
+  {
+    while(!ifs[i].ready);
+    if(ifs[i].error)
+    {
+      cerr << "Server " << i << " failed to initialize!\n";
+      return -1;
+    }
+  }
+
+  return 0; // exit successfully
+}
+
+////////////////////////////////////////////////////////////////////////////////
+int stream_file(vector<SocketInterface>& ifs, vector<pthread_t>& threads)
+{
+
+  return 0; // exit successfully
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void* server_thread(void *intf)
+{
+  SocketInterface *i = static_cast<SocketInterface*>(intf);
+
+  // try to init server
+  if(init_server(i)) pthread_exit(nullptr);
+
+  pthread_exit(nullptr);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+int init_server(SocketInterface *i)
 {
   // setup initialization command pkt
   char send_buf[128], rec_buf[128];
-  sprintf(send_buf, "%c%s", static_cast<char>(PKT_CMD::INIT_SERVER), file);
+  sprintf(send_buf, "%c%s", static_cast<char>(PKT_CMD::INIT_SERVER), i->file);
 
-  // send command across all servers
-  // TODO: This has room for improvment since it's done serially
-  for(unsigned server_index = 0; server_index < sockets.size(); server_index++)
+  // send init pkt until response is received
+  do
   {
-    // send init pkt until response is received
-    ClientSocket& s = sockets[server_index];
-    do
-    {
-      if(s.send(send_buf, 128)) return server_index;
-      bzero(rec_buf, 128);
-    }
-    while (s.receive(rec_buf, 128));
+    if(i->socket.send(send_buf, 128)) return -1;
+    bzero(rec_buf, 128);
+  }
+  while (i->socket.receive(rec_buf, 128));
 
-    // check response
-    if(static_cast<PKT_CMD>(*rec_buf) != PKT_CMD::SERVER_READY)
-    {
-      return server_index;
-    }
+  // check response
+  if(static_cast<PKT_CMD>(*rec_buf) != PKT_CMD::SERVER_READY)
+  {
+    return -1;
   }
 
   return 0;

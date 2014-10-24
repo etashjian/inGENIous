@@ -9,6 +9,35 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
+#include <queue>
+#include <pthread.h>
+
+////////////////////////////////////////////////////////////////////////////////
+/**
+ * \struct SocketInterface
+ * \brief Struct acts as an interface between socket thread and main Client
+ */
+struct SocketInterface
+{
+  // TODO NEED TO ADD MUTEX INFO
+
+  // Data
+  ClientSocket& socket; /// Socket to use
+  char *file; /// File to transmit
+  std::queue<unsigned> frame_reqs; /// Frame offset of next requested frames
+
+  // Control signals
+  unsigned ready; /// Indicates socket is ready for use
+  unsigned error; /// Indicates an error occurred in thread
+
+  // Constructor
+  SocketInterface(char *file_, ClientSocket& socket_)
+  : socket(socket_)
+  , file(file_)
+  , ready(0)
+  , error(0)
+  {}
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
@@ -23,10 +52,41 @@
 int parse_config_file(const char *filename, std::vector<ClientSocket>& sockets);
 
 /**
- * \fn int init_servers(const char *file, std::vector<ClientSocket>& sockets)
- * \brief Sends init messages to all server to open and prepare to send file
- * \param file Name of file for servers to open and send
- * \param sockets Vector of sockets to send from
- * \return zero if successful, otherwise index of server if a server fails
+ * \fn int start_servers(vector<SocketInterface>& ifs,vector<pthread_t> threads)
+ * \brief Create thread for communication to each server and init servers
+ * \param ifs Vector of SocketInterfaces to use indexed by server
+ * \param threads Vector of pthreads indexed by server
+ * \param sockets ClientSockets for the server threads
+ * \param file File for servers to load
+ * \return zero if parse succeeds, non-zero on fail
  */
-int init_servers(const char *file, std::vector<ClientSocket>& sockets);
+int start_servers(std::vector<SocketInterface>& ifs, 
+                  std::vector<pthread_t>& threads,
+                  std::vector<ClientSocket>& sockets,
+                  char * file);
+
+/**
+ * \fn int stream_file(vector<SocketInterface>& ifs, vector<pthread_t> threads)
+ * \brief Streams file 
+ * \param ifs Vector of SocketInterfaces indexed by server
+ * \param threads Vector of pthreads indexed by server
+ * \return zero if success, non-zero on fail
+ */
+int stream_file(std::vector<SocketInterface>& ifs, 
+                std::vector<pthread_t>& threads);
+
+/**
+ * \fn void* server_thread(void *intf)
+ * \brief Producer thread for a given server
+ * \param intf Pointer to SocketInterface for this socket
+ */
+void* server_thread(void *intf);
+
+/**
+ * \fn int init_server(const char *file, ClientSocket& socket)
+ * \brief Sends init message to server to open and prepare to send file
+ * \param i SocketInterface of socket thread calling init
+ * \return zero if successful, non-zero on fail
+ */
+int init_server(SocketInterface *i);
+

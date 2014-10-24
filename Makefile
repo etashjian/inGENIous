@@ -9,9 +9,9 @@ CXX=g++
 CPPFLAGS= -Wall -ansi -O0 -std=c++11 -I $(INCDIR)
 #CPPFLAGS= -Wall -ansi -O3 -std=c++11
 
-#LFLAGS= -Wall -ansi -g -O0
-LFLAGS= -Wall -ansi -O0
-#LFLAGS= -Wall -ansi -O3
+#LFLAGS= -Wall -ansi -g -O0 -pthread
+LFLAGS= -Wall -ansi -O0 -pthread
+#LFLAGS= -Wall -ansi -O3 -pthread
 
 
 all: $(BINDIR)/Server $(BINDIR)/Client
