@@ -22,21 +22,13 @@ struct SocketInterface
   // TODO NEED TO ADD MUTEX INFO
 
   // Data
-  ClientSocket& socket; /// Socket to use
+  ClientSocket *socket; /// Socket to use
   char *file; /// File to transmit
   std::queue<unsigned> frame_reqs; /// Frame offset of next requested frames
 
   // Control signals
-  unsigned ready; /// Indicates socket is ready for use
-  unsigned error; /// Indicates an error occurred in thread
-
-  // Constructor
-  SocketInterface(char *file_, ClientSocket& socket_)
-  : socket(socket_)
-  , file(file_)
-  , ready(0)
-  , error(0)
-  {}
+  unsigned ready = 0; /// Indicates socket is ready for use
+  unsigned error = 0; /// Indicates an error occurred in thread
 };
 
 ////////////////////////////////////////////////////////////////////////////////

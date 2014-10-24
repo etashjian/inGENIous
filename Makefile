@@ -5,9 +5,9 @@ INCDIR = include
 OBJS = Socket.o Scheduler.o
 
 CXX=g++
-#CPPFLAGS= -Wall -ansi -g -O0 -std=c++11
+#CPPFLAGS= -Wall -ansi -g -O0 -std=c++11 -I $(INCDIR)
 CPPFLAGS= -Wall -ansi -O0 -std=c++11 -I $(INCDIR)
-#CPPFLAGS= -Wall -ansi -O3 -std=c++11
+#CPPFLAGS= -Wall -ansi -O3 -std=c++11 -I $(INCDIR)
 
 #LFLAGS= -Wall -ansi -g -O0 -pthread
 LFLAGS= -Wall -ansi -O0 -pthread

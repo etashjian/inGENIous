@@ -6,8 +6,7 @@
  *----------------------------------------------------------------------------*/
 #include "Server.h"
 
-using std::cout;
-using std::ifstream;
+using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////
 int main (int argc, char **argv)
@@ -30,20 +29,31 @@ int main (int argc, char **argv)
   {
     // wait for start message
     s.receive(buf, 128);
-    cout << "Received a datagram\n";
+    cout << "Received a datagram: ";
 
     PKT_CMD cmd = static_cast<PKT_CMD>(*buf);
     switch(cmd)
     {
       case PKT_CMD::INIT_SERVER:
       {
+        // close any previously opened file
+        in.close();
+
         // grab movie name and try to open
         char *filename = buf + 1;
         in.open(filename);
 
         // send appropriate response
-        if(in.is_open()) sprintf(buf, "%c", PKT_CMD::SERVER_READY);
-        else sprintf(buf, "%c", PKT_CMD::INVALID_INIT);
+        if(in.is_open()) 
+        { 
+          cout << "opened file " << filename << endl;
+          sprintf(buf, "%c", PKT_CMD::SERVER_READY);
+        }
+        else
+        { 
+          cout << "could not open " << filename << endl;
+          sprintf(buf, "%c", PKT_CMD::INVALID_INIT);
+        }
 
         s.send(buf, 128);
       }
@@ -55,6 +65,7 @@ int main (int argc, char **argv)
 
       default:
         // drop any other pkts
+        cout << "invalid command.\n";
         break;
     }
   }

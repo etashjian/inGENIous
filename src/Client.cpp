@@ -20,27 +20,33 @@ int main(int argc, char **argv)
 
   // setup sockets
   vector<ClientSocket> sockets;
-  if (parse_config_file("client.cfg", sockets))
+  cout << "Setting up sockets... " << flush;
+  if (parse_config_file("Configuration/server.cfg", sockets))
   {
     cerr << "Config file parse failed!\n";
     exit(-1);
   }
+  cout << "done\n";
 
   // launch threads
-  vector<SocketInterface> ifs;
+  cout << "Launching threads... " << flush;
+  vector<SocketInterface> ifs(sockets.size());
   vector<pthread_t> threads(sockets.size());
-  if (start_servers(ifs, threads, sockets, argv[1]))
+  if(start_servers(ifs, threads, sockets, argv[1]))
   {
     cerr << "Failed to start servers!\n";
     exit(-1);
   }
+  cout << "done\n"; 
 
   // stream file
+  cout << "Streaming file... " << flush;
   if (stream_file(ifs, threads))
   {
     cerr << "Failed to stream file!\n";
     exit(-1);
   }
+  cout << "done\n";
 
   return 0;
 }
@@ -62,8 +68,8 @@ int parse_config_file(const char *filename, vector<ClientSocket>& sockets)
 
     // create corresponding socket
     sockets.push_back(ClientSocket(atoi(port.c_str()), hostname.c_str()));
-    sockets.back().init();
-    sockets.back().configure_timeout(2, 0);
+    if(sockets.back().init() || sockets.back().configure_timeout(2, 0))
+      return -1;
   }
 
   return 0;
@@ -79,7 +85,8 @@ int start_servers(vector<SocketInterface>& ifs,
   int rc = 0;
   for(unsigned i = 0; i < sockets.size(); i++)
   {
-    ifs.push_back(SocketInterface(file, sockets[i]));
+    ifs[i].socket = &sockets[i];
+    ifs[i].file = file;
     rc = pthread_create(&threads[i], nullptr, server_thread, (void*) &ifs[i]);
     if(rc)
     {
@@ -91,7 +98,7 @@ int start_servers(vector<SocketInterface>& ifs,
   // wait for ready signals
   for(unsigned i = 0; i < sockets.size(); i++)
   {
-    while(!ifs[i].ready);
+    while(!ifs[i].ready && !ifs[i].error);
     if(ifs[i].error)
     {
       cerr << "Server " << i << " failed to initialize!\n";
@@ -130,17 +137,19 @@ int init_server(SocketInterface *i)
   // send init pkt until response is received
   do
   {
-    if(i->socket.send(send_buf, 128)) return -1;
+    if(i->socket->send(send_buf, 128)) return -1;
     bzero(rec_buf, 128);
   }
-  while (i->socket.receive(rec_buf, 128));
+  while (i->socket->receive(rec_buf, 128));
 
   // check response
   if(static_cast<PKT_CMD>(*rec_buf) != PKT_CMD::SERVER_READY)
   {
+    i->error = 1;
     return -1;
   }
 
+  i->ready = 1;
   return 0;
 }
 
