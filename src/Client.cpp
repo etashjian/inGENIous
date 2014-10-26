@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     cerr << "Failed to start servers!\n";
     exit(-1);
   }
-  cout << "done\n"; 
+  cout << "done\n";
 
   // stream file
   cout << "Streaming file... " << flush;
@@ -104,6 +104,8 @@ int start_servers(vector<SocketInterface>& ifs,
       cerr << "Server " << i << " failed to initialize!\n";
       return -1;
     }
+
+    cout << ifs[i].file_size << endl;
   }
 
   return 0; // exit successfully
@@ -120,9 +122,37 @@ int stream_file(vector<SocketInterface>& ifs, vector<pthread_t>& threads)
 void* server_thread(void *intf)
 {
   SocketInterface *i = static_cast<SocketInterface*>(intf);
+  unsigned frame = 0;
+  char send_buf[PKT_SIZE], rec_buf[PKT_SIZE];
 
   // try to init server
   if(init_server(i)) pthread_exit(nullptr);
+
+  // keep waiting for packets until client signals close
+  while(i->ready)
+  {
+    // wait for next packet or exit condition
+    while(i->ready && i->frame_reqs.empty());
+    if(!i->ready) break;
+
+    // get next frame
+    pthread_mutex_lock(&i->lock);
+    frame = i->frame_reqs.front();
+    i->frame_reqs.pop();
+    pthread_mutex_unlock(&i->lock);
+
+    // build/send request packet
+    *send_buf = static_cast<char>(PKT_CMD::FRAME_REQ);
+    memcpy(send_buf + INDEX_POS, &frame, sizeof(unsigned));
+    do
+    {
+      if(i->socket->send(send_buf, PKT_SIZE)) pthread_exit(nullptr);
+      bzero(rec_buf, PKT_SIZE);
+    }
+    while(i->socket->receive(rec_buf, PKT_SIZE));
+
+    // TODO CHECK THIS
+  }
 
   pthread_exit(nullptr);
 }
@@ -131,16 +161,16 @@ void* server_thread(void *intf)
 int init_server(SocketInterface *i)
 {
   // setup initialization command pkt
-  char send_buf[128], rec_buf[128];
+  char send_buf[PKT_SIZE], rec_buf[PKT_SIZE];
   sprintf(send_buf, "%c%s", static_cast<char>(PKT_CMD::INIT_SERVER), i->file);
 
   // send init pkt until response is received
   do
   {
-    if(i->socket->send(send_buf, 128)) return -1;
-    bzero(rec_buf, 128);
+    if(i->socket->send(send_buf, PKT_SIZE)) return -1;
+    bzero(rec_buf, PKT_SIZE);
   }
-  while (i->socket->receive(rec_buf, 128));
+  while (i->socket->receive(rec_buf, PKT_SIZE));
 
   // check response
   if(static_cast<PKT_CMD>(*rec_buf) != PKT_CMD::SERVER_READY)
@@ -148,6 +178,9 @@ int init_server(SocketInterface *i)
     i->error = 1;
     return -1;
   }
+
+  // pull out file size
+  memcpy(&i->file_size, rec_buf + PKT_HDR_SIZE, sizeof(unsigned));
 
   i->ready = 1;
   return 0;

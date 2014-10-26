@@ -20,3 +20,10 @@ enum class PKT_CMD : char
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+const unsigned FRAME_SIZE = 1024; /// Size of move frame
+const unsigned PKT_HDR_SIZE = sizeof(PKT_CMD) + sizeof(unsigned);
+const unsigned PKT_DATA_SIZE = 128; /// 128 bytes of data per packet
+const unsigned PKT_SIZE = PKT_HDR_SIZE + PKT_DATA_SIZE; /// Total size of pkt
+const unsigned INDEX_POS = sizeof(PKT_CMD);
+
+////////////////////////////////////////////////////////////////////////////////

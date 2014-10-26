@@ -19,8 +19,6 @@
  */
 struct SocketInterface
 {
-  // TODO NEED TO ADD MUTEX INFO
-
   // Data
   ClientSocket *socket; /// Socket to use
   char *file; /// File to transmit
@@ -29,6 +27,8 @@ struct SocketInterface
   // Control signals
   unsigned ready = 0; /// Indicates socket is ready for use
   unsigned error = 0; /// Indicates an error occurred in thread
+  unsigned file_size = 0; /// size of file on server
+  pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER; 
 };
 
 ////////////////////////////////////////////////////////////////////////////////
