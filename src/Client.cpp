@@ -48,6 +48,10 @@ int main(int argc, char **argv)
   }
   cout << "done\n";
 
+  // join all threads
+  for(unsigned i = 0; i < threads.size(); i++)
+    pthread_join(threads[i], nullptr); 
+
   return 0;
 }
 
@@ -104,8 +108,6 @@ int start_servers(vector<SocketInterface>& ifs,
       cerr << "Server " << i << " failed to initialize!\n";
       return -1;
     }
-
-    cout << ifs[i].file_size << endl;
   }
 
   return 0; // exit successfully
@@ -114,6 +116,24 @@ int start_servers(vector<SocketInterface>& ifs,
 ////////////////////////////////////////////////////////////////////////////////
 int stream_file(vector<SocketInterface>& ifs, vector<pthread_t>& threads)
 {
+  // for now just evenly spread requests across servers
+  unsigned index = 0;
+  unsigned server = 0;
+  while(index * PKT_DATA_SIZE < ifs[0].file_size)
+  {
+    // push request
+    pthread_mutex_lock(&ifs[server].lock);
+    ifs[server].frame_reqs.push(index);
+    pthread_mutex_unlock(&ifs[server].lock);
+
+    // update pos and server
+    index++;
+    server = (server + 1) % ifs.size();
+  }
+
+  // signal done to all threads
+  for(unsigned i = 0; i < ifs.size(); i++)
+    ifs[i].ready = 0;
 
   return 0; // exit successfully
 }
@@ -150,7 +170,7 @@ void* server_thread(void *intf)
       bzero(rec_buf, PKT_SIZE);
     }
     while(i->socket->receive(rec_buf, PKT_SIZE));
-
+   
     // TODO CHECK THIS
   }
 
@@ -162,7 +182,8 @@ int init_server(SocketInterface *i)
 {
   // setup initialization command pkt
   char send_buf[PKT_SIZE], rec_buf[PKT_SIZE];
-  sprintf(send_buf, "%c%s", static_cast<char>(PKT_CMD::INIT_SERVER), i->file);
+  *send_buf = static_cast<char>(PKT_CMD::INIT_SERVER);
+  sprintf(send_buf + PKT_HDR_SIZE, "%s", i->file);
 
   // send init pkt until response is received
   do

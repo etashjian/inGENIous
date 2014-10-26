@@ -32,7 +32,7 @@ int main (int argc, char **argv)
   {
     // wait for start message
     if(s.receive(buf, 128)) exit(-1);
-    cout << "Received a datagram: ";
+    cout << "Received a datagram: " << flush;
 
     // choose appropriate action based on packet header
     PKT_CMD cmd = static_cast<PKT_CMD>(*buf);
@@ -95,8 +95,19 @@ int init_server(ServerSocket& s, ifstream& in, char *buf)
 ////////////////////////////////////////////////////////////////////////////////
 int send_frame_data(ServerSocket& s, ifstream& in, char *buf)
 {
+  // pull out index
+  unsigned index = 0;
+  memcpy(&index, buf + INDEX_POS, sizeof(unsigned)); 
 
-  return 0;
+  // grab data from file
+  in.seekg(index * PKT_DATA_SIZE);
+  in.read(buf + PKT_HDR_SIZE, PKT_DATA_SIZE);
+
+  // build/send response
+  *buf = static_cast<char>(PKT_CMD::FRAME_DATA);
+
+  cout << "sending index " << index << endl;
+  return s.send(buf, PKT_SIZE);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
