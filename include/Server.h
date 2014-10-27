@@ -4,6 +4,10 @@
  * \date October 2015
  * \brief Header for Server executable in movie streaming project
  *----------------------------------------------------------------------------*/
+
+#ifndef SERVER_H
+#define SERVER_H
+
 #include "Common.h"
 #include "Socket.h"
 #include <iostream>
@@ -29,3 +33,5 @@ int init_server(ServerSocket& s, std::ifstream& in, char *buf);
  * \return zero on success, non-zero on fail
  */
 int send_frame_data(ServerSocket& s, std::ifstream& in, char *buf);
+////////////////////////////////////////////////////////////////////////////////
+#endif

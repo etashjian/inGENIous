@@ -4,6 +4,7 @@
  * \date October 2015
  * \brief Implenetation of Client executable
  *----------------------------------------------------------------------------*/
+
 #include "Client.h"
 
 using namespace std;
@@ -50,7 +51,7 @@ int main(int argc, char **argv)
 
   // join all threads
   for(unsigned i = 0; i < threads.size(); i++)
-    pthread_join(threads[i], nullptr); 
+    pthread_join(threads[i], nullptr);
 
   return 0;
 }
@@ -170,7 +171,7 @@ void* server_thread(void *intf)
       bzero(rec_buf, PKT_SIZE);
     }
     while(i->socket->receive(rec_buf, PKT_SIZE));
-   
+
     // TODO CHECK THIS
   }
 

@@ -4,6 +4,10 @@
  * \date October 2015 
  * \brief General purpose UDP sockets
  *----------------------------------------------------------------------------*/
+
+#ifndef SOCKET_H
+#define SOCKET_H
+
 #include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -166,3 +170,4 @@ class ServerSocket : public Socket
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+#endif

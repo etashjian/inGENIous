@@ -4,6 +4,7 @@
  * \date October 2015
  * \brief Definitions for server exectuable
  *----------------------------------------------------------------------------*/
+
 #include "Server.h"
 
 using namespace std;
@@ -97,7 +98,7 @@ int send_frame_data(ServerSocket& s, ifstream& in, char *buf)
 {
   // pull out index
   unsigned index = 0;
-  memcpy(&index, buf + INDEX_POS, sizeof(unsigned)); 
+  memcpy(&index, buf + INDEX_POS, sizeof(unsigned));
 
   // grab data from file
   in.seekg(index * PKT_DATA_SIZE);

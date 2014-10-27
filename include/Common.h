@@ -5,6 +5,9 @@
  * \brief Common enums and constants
  *----------------------------------------------------------------------------*/
 
+#ifndef COMMON_H
+#define COMMON_H
+
 ////////////////////////////////////////////////////////////////////////////////
 /**
  * \enum PKT_CMD
@@ -27,3 +30,4 @@ const unsigned PKT_SIZE = PKT_HDR_SIZE + PKT_DATA_SIZE; /// Total size of pkt
 const unsigned INDEX_POS = sizeof(PKT_CMD);
 
 ////////////////////////////////////////////////////////////////////////////////
+#endif

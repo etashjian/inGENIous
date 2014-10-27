@@ -4,6 +4,10 @@
  * \date October 2015
  * \brief Declarations for scheduler classes for dynamically picking servers
  *----------------------------------------------------------------------------*/
+
+#ifndef SCHEDULER_H
+#define SCHEDULER_H
+
 #include <vector>
 #include <stdlib.h>
 
@@ -96,3 +100,4 @@ class SimpleSched : Scheduler
 };
 
 ////////////////////////////////////////////////////////////////////////////////
+#endif

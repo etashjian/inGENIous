@@ -4,6 +4,7 @@
  * \date October 2015
  * \brief Definitions for scheduler classes for dynamically picking servers
  *----------------------------------------------------------------------------*/
+
 #include "Scheduler.hpp"
 
 ////////////////////////////////////////////////////////////////////////////////

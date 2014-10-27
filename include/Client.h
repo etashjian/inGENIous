@@ -4,6 +4,10 @@
  * \date October 2015
  * \brief Header for Client executable for moving streaming project
  *----------------------------------------------------------------------------*/
+
+#ifndef CLIENT_H
+#define CLIENT_H
+
 #include "Socket.h"
 #include "Common.h"
 #include <iostream>
@@ -82,3 +86,5 @@ void* server_thread(void *intf);
  */
 int init_server(SocketInterface *i);
 
+////////////////////////////////////////////////////////////////////////////////
+#endif
