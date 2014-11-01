@@ -32,7 +32,9 @@ struct SocketInterface
   unsigned ready = 0; /// Indicates socket is ready for use
   unsigned error = 0; /// Indicates an error occurred in thread
   unsigned file_size = 0; /// size of file on server
-  pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER; 
+  pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
+  pthread_cond_t full = PTHREAD_COND_INITIALIZER;
+  pthread_cond_t empty = PTHREAD_COND_INITIALIZER;
 };
 
 ////////////////////////////////////////////////////////////////////////////////

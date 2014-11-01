@@ -124,8 +124,12 @@ int stream_file(vector<SocketInterface>& ifs, vector<pthread_t>& threads)
   {
     // push request
     pthread_mutex_lock(&ifs[server].lock);
+    while(ifs[server].frame_reqs.size() == MAX_QUEUE_SIZE)
+      pthread_cond_wait(&ifs[server].full, &ifs[server].lock);
+
     ifs[server].frame_reqs.push(index);
     pthread_mutex_unlock(&ifs[server].lock);
+    pthread_cond_signal(&ifs[server].empty);
 
     // update pos and server
     index++;
@@ -153,14 +157,17 @@ void* server_thread(void *intf)
   while(i->ready)
   {
     // wait for next packet or exit condition
-    while(i->ready && i->frame_reqs.empty());
-    if(!i->ready) break;
+    pthread_mutex_lock(&i->lock);
+    while(i->frame_reqs.empty() && i->ready)
+      pthread_cond_wait(&i->empty, &i->lock);
+
+    if(!i->ready) break; // kill thread when ready is unset
 
     // get next frame
-    pthread_mutex_lock(&i->lock);
     frame = i->frame_reqs.front();
     i->frame_reqs.pop();
     pthread_mutex_unlock(&i->lock);
+    pthread_cond_signal(&i->full);
 
     // build/send request packet
     *send_buf = static_cast<char>(PKT_CMD::FRAME_REQ);
