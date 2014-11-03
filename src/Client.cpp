@@ -113,6 +113,13 @@ int stream_data(vector<SocketInterface>& ifs,
                 vector<pthread_t>& threads, 
                 unsigned num_frames)
 {
+  // initialize reference time
+  if(gettimeofday(&start_time, nullptr))
+  {
+    cerr << "FAILED TO INITIALIZE REFERENCE TIME\n";
+    return -1;
+  } 
+
   // for now just evenly spread requests across servers
   unsigned server = 0;
   for(unsigned index = 0; index < num_frames; index++)
@@ -177,7 +184,16 @@ void* server_thread(void *intf)
     }
     while(i->socket->receive(rec_buf, PKT_SIZE));
 
-    // TODO CHECK THIS
+    // record time stamp (printed to std err)
+    struct timeval time;
+    if(gettimeofday(&time, nullptr)) 
+    {
+      cerr << "FAILED TO READ WALL TIME!\n";
+      pthread_exit(nullptr);
+    }
+    stringstream ss;
+    ss << (double)time.tv_sec + (double)time.tv_usec * .000001 - (double)start_time.tv_sec - (double)start_time.tv_usec * .000001 << " " << frame << endl;
+    cerr << ss.str(); 
   }
 
   pthread_exit(nullptr);
