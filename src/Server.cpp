@@ -46,7 +46,7 @@ int main (int argc, char **argv)
 
     // build random message (using letters for easy visual checking)
     for(unsigned i = 0; i < PKT_DATA_SIZE; i++)
-      *(buf + i) = static_cast<char>('a' + rand()%26);
+      *(buf + PKT_HDR_SIZE + i) = static_cast<char>('a' + rand()%26);
 
     // send response
     cout << "sending index " << index << endl;
