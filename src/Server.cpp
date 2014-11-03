@@ -35,80 +35,20 @@ int main (int argc, char **argv)
     if(s.receive(buf, 128)) exit(-1);
     cout << "Received a datagram: " << flush;
 
-    // choose appropriate action based on packet header
-    PKT_CMD cmd = static_cast<PKT_CMD>(*buf);
-    switch(cmd)
-    {
-      // Server initialization
-      case PKT_CMD::INIT_SERVER:
-        if(init_server(s, in, buf)) exit(-1);
-        break;
+    // pull out index
+    unsigned index;
+    memcpy(&index, buf, PKT_HDR_SIZE);
 
-      // Frame data request
-      case PKT_CMD::FRAME_REQ:
-        if(send_frame_data(s, in, buf)) exit(-1);
-        break;
+    // build random message (using letters for easy visual checking)
+    for(unsigned i = 0; i < PKT_DATA_SIZE; i++)
+      *(buf + i) = static_cast<char>('a' + rand()%26);
 
-      // Bad command
-      default:
-        // drop any other pkts
-        cout << "invalid command.\n";
-        break;
-    }
+    // send response
+    cout << "sending index " << index << endl;
+    return s.send(buf, PKT_SIZE);
   }
 
   return 0;
-}
-
-////////////////////////////////////////////////////////////////////////////////
-int init_server(ServerSocket& s, ifstream& in, char *buf)
-{
-  // close any previously opened file
-  if(in.is_open()) in.close();
-
-  // grab movie name and try to open
-  char *filename = buf + PKT_HDR_SIZE;
-  in.open(filename);
-
-  // send appropriate response
-  if(in.is_open())
-  {
-    cout << "opened file " << filename << endl;
-
-    // calc number of frames
-    in.seekg(0, in.end);
-    unsigned length = in.tellg();
-    in.seekg(0, in.beg);
-
-    // format message
-    sprintf(buf, "%c", PKT_CMD::SERVER_READY);
-    memcpy(buf + PKT_HDR_SIZE, &length, sizeof(unsigned));
-  }
-  else
-  {
-    cout << "could not open " << filename << endl;
-    sprintf(buf, "%c", PKT_CMD::INVALID_INIT);
-  }
-
-  return s.send(buf, PKT_SIZE);
-}
-
-////////////////////////////////////////////////////////////////////////////////
-int send_frame_data(ServerSocket& s, ifstream& in, char *buf)
-{
-  // pull out index
-  unsigned index = 0;
-  memcpy(&index, buf + INDEX_POS, sizeof(unsigned));
-
-  // grab data from file
-  in.seekg(index * PKT_DATA_SIZE);
-  in.read(buf + PKT_HDR_SIZE, PKT_DATA_SIZE);
-
-  // build/send response
-  *buf = static_cast<char>(PKT_CMD::FRAME_DATA);
-
-  cout << "sending index " << index << endl;
-  return s.send(buf, PKT_SIZE);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
