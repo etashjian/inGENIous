@@ -2,7 +2,7 @@
 $count = 0;
 while(<>){
 	print $_;
-	/(\d+) (\d+)/;
+	/(\d+.\d+) (\d+)/;
 	#print $1;
 	push(@frames,$2);
 	#print $2;
@@ -13,10 +13,10 @@ while(<>){
 #print @times; print "\n";
 $wait = 1;
 $rate = 1;
-for (my $i = 1; $i < 100; $i+=.5){
+for (my $i = $times[0]; $i < 5; $i+=.5){
 	#print $i;
 	$wait = $i;
-	for (my $j = .1; $j <= 10; $j+=.1){
+	for (my $j = 100; $j <= 10000; $j+=100){
 		#print " $j\n";
 		$rate = $j;
 		#print "$rate(x - $wait)\n";
