@@ -1,26 +1,36 @@
 #! /usr/bin/perl
-$count = 0;
+use strict;
+my $count = 0;
+my @frames;
+my @times;
+my $maxrate = 0;
 while(<>){
-	print $_;
+	#print $_;
 	/(\d+.\d+) (\d+)/;
 	#print $1;
 	push(@frames,$2);
 	#print $2;
 	push(@times,$1);
 	$count++;
+	$maxrate = $2 / $times[0];
 }
+#print "maxrate: $maxrate\n";
+#print "$times[0]\n";
 #print @frames; print "\n";
 #print @times; print "\n";
-$wait = 1;
-$rate = 1;
-for (my $i = $times[0]; $i < 5; $i+=.5){
+my $wait = 1;
+my @waits;
+my $rate = 1;
+my @rates;
+#for (my $i = $times[0]; $i < 5; $i+=.1){
+for (my $i = .1; $i < 2; $i+=.1){
 	#print $i;
 	$wait = $i;
-	for (my $j = 100; $j <= 10000; $j+=100){
+	for (my $j = 1000; $j <= $maxrate; $j+=10){
 		#print " $j\n";
 		$rate = $j;
 		#print "$rate(x - $wait)\n";
-		$test = 0;
+		my $test = 0;
 		for (my $k = 0;$k < $count; $k++){
 			#if ($rate*($times[$k] - $wait) > $frames[$k]){
 			if ($rate*($times[$k] - $wait) > $frames[$k]){
@@ -39,14 +49,14 @@ for (my $i = $times[0]; $i < 5; $i+=.5){
 		push(@waits,$wait);
 	}
 }
-print "\n";
+#print "\n";
 # now pick best rate
 #print "\n"; print @rates;
 #print "\n"; print @waits;
-#print "Solutions: "; print scalar @rates; print "\n";
-$alpha = 1;
-$betta = 1;
-$solutions = scalar @rates;
+print "Solutions: "; print scalar @rates; print "\n";
+my $alpha = 10;
+my $betta = .001;
+my $solutions = scalar @rates;
 my $best = 0;
 my $which = 0;
 for (my $i = 0; $i < $solutions; $i++){
@@ -54,13 +64,15 @@ for (my $i = 0; $i < $solutions; $i++){
 	my $temprate = $rates[$i];
 	#my $cost = $temprate / $tempwait;
 	my $cost = (exp (-$alpha*$tempwait))*(1 - exp (-$betta*$temprate));
-	#print "$cost,";
+	#my $first = exp (-$alpha*$tempwait);
+	#my $last = 1-exp(-$betta*$temprate);
+	#print "$tempwait,$temprate,$first,$last,$cost\n";
 	if ($cost > $best){
 		$best = $cost;
 		$which = $i;
 	}
 }
-print "\nCost: $best\n";
+print "\nUser Satisfaction: $best\n";
 print "Best Rate: $rates[$which]\n";
 print "Best Wait: $waits[$which]\n";
 print "$rates[$which]*(x - $waits[$which])";
