@@ -64,14 +64,16 @@ int start_servers(std::vector<SocketInterface>& ifs,
                   char * file);
 
 /**
- * \fn int stream_file(vector<SocketInterface>& ifs, vector<pthread_t> threads)
+ * \fn int stream_data(vector<SocketInterface>& ifs, vector<pthread_t> threads)
  * \brief Streams file 
  * \param ifs Vector of SocketInterfaces indexed by server
  * \param threads Vector of pthreads indexed by server
+ * \param num_frames Number of frames to receive
  * \return zero if success, non-zero on fail
  */
-int stream_file(std::vector<SocketInterface>& ifs, 
-                std::vector<pthread_t>& threads);
+int stream_data(std::vector<SocketInterface>& ifs, 
+                std::vector<pthread_t>& threads,
+                unsigned num_frames);
 
 /**
  * \fn void* server_thread(void *intf)

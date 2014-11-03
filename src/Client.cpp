@@ -15,7 +15,7 @@ int main(int argc, char **argv)
   // check args
   if (argc != 2)
   {
-    cerr << "Usage: Client <filename>\n";
+    cerr << "Usage: Client <#frames>\n";
     exit(-1);
   }
 
@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 
   // stream file
   cout << "Streaming file... " << flush;
-  if (stream_file(ifs, threads))
+  if (stream_data(ifs, threads, atoi(argv[1])))
   {
     cerr << "Failed to stream file!\n";
     exit(-1);
@@ -50,8 +50,13 @@ int main(int argc, char **argv)
   cout << "done\n";
 
   // join all threads
+  cout << "Joining threads... " << flush;
   for(unsigned i = 0; i < threads.size(); i++)
+  {
+    pthread_cond_signal(&ifs[i].empty);
     pthread_join(threads[i], nullptr);
+  }
+  cout << "done";
 
   return 0;
 }
@@ -104,12 +109,13 @@ int start_servers(vector<SocketInterface>& ifs,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int stream_file(vector<SocketInterface>& ifs, vector<pthread_t>& threads)
+int stream_data(vector<SocketInterface>& ifs, 
+                vector<pthread_t>& threads, 
+                unsigned num_frames)
 {
   // for now just evenly spread requests across servers
-  unsigned index = 0;
   unsigned server = 0;
-  while(index * PKT_DATA_SIZE < ifs[0].file_size)
+  for(unsigned index = 0; index < num_frames; index++)
   {
     // push request
     pthread_mutex_lock(&ifs[server].lock);
@@ -121,13 +127,15 @@ int stream_file(vector<SocketInterface>& ifs, vector<pthread_t>& threads)
     pthread_cond_signal(&ifs[server].empty);
 
     // update pos and server
-    index++;
     server = (server + 1) % ifs.size();
   }
 
   // signal done to all threads
   for(unsigned i = 0; i < ifs.size(); i++)
+  {
+    while(!ifs[i].frame_reqs.empty());
     ifs[i].ready = 0;
+  }
 
   return 0; // exit successfully
 }
@@ -148,7 +156,9 @@ void* server_thread(void *intf)
     // wait for next packet or exit condition
     pthread_mutex_lock(&i->lock);
     while(i->frame_reqs.empty() && i->ready)
+    {
       pthread_cond_wait(&i->empty, &i->lock);
+    }
 
     if(!i->ready) break; // kill thread when ready is unset
 
