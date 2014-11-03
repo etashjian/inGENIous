@@ -28,6 +28,11 @@ int main (int argc, char **argv)
   if(s.init()) exit(-1);
   cout << "ready!\n";
 
+
+  // random seed
+  srand(time(nullptr));
+
+
   // start serving
   while (1)
   {
