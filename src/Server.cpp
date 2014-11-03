@@ -45,7 +45,11 @@ int main (int argc, char **argv)
 
     // send response
     cout << "sending index " << index << endl;
-    return s.send(buf, PKT_SIZE);
+    if(s.send(buf, PKT_SIZE))
+    {
+      cout << "FAILED TO SEND PACKET!\n";
+      return -1;
+    }
   }
 
   return 0;
