@@ -56,7 +56,7 @@ int main(int argc, char **argv)
     pthread_cond_signal(&ifs[i].empty);
     pthread_join(threads[i], nullptr);
   }
-  cout << "done";
+  cout << "done\n";
 
   return 0;
 }

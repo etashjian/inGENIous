@@ -3,10 +3,10 @@ use strict;
 my $count = 0;
 my @frames;
 my @times;
-my $maxrate = 0;
+my $maxrate = 20;
 while(<>){
 	#print $_;
-	/(\d+.\d+) (\d+)/;
+	/(\d+.?\d*) (\d+)/;
 	#print $1;
 	push(@frames,$2);
 	#print $2;
@@ -26,7 +26,7 @@ my @rates;
 for (my $i = .1; $i < 2; $i+=.1){
 	#print $i;
 	$wait = $i;
-	for (my $j = 1000; $j <= $maxrate; $j+=10){
+	for (my $j = 1; $j <= $maxrate; $j+=10){
 		#print " $j\n";
 		$rate = $j;
 		#print "$rate(x - $wait)\n";
