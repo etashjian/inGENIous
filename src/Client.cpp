@@ -109,8 +109,8 @@ int start_servers(vector<SocketInterface>& ifs,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-int stream_data(vector<SocketInterface>& ifs, 
-                vector<pthread_t>& threads, 
+int stream_data(vector<SocketInterface>& ifs,
+                vector<pthread_t>& threads,
                 unsigned num_frames)
 {
   // initialize reference time
@@ -118,7 +118,7 @@ int stream_data(vector<SocketInterface>& ifs,
   {
     cerr << "FAILED TO INITIALIZE REFERENCE TIME\n";
     return -1;
-  } 
+  }
 
   // for now just evenly spread requests across servers
   unsigned server = 0;
@@ -152,7 +152,9 @@ void* server_thread(void *intf)
 {
   SocketInterface *i = static_cast<SocketInterface*>(intf);
   unsigned frame = 0;
-  char send_buf[PKT_SIZE], rec_buf[PKT_SIZE];
+  char rec_buf[PKT_SIZE];
+  set<unsigned> outstanding_frames, oo_frames;
+  unsigned window_size = INIT_WINDOW_SIZE;
 
   // set thread to ready
   i->ready = 1;
@@ -160,43 +162,95 @@ void* server_thread(void *intf)
   // keep waiting for packets until client signals close
   while(i->ready)
   {
-    // wait for next packet or exit condition
-    pthread_mutex_lock(&i->lock);
-    while(i->frame_reqs.empty() && i->ready)
+    // if window not full and packets available, get/send them
+    if(outstanding_frames.size() < window_size && !i->frame_reqs.empty())
     {
-      pthread_cond_wait(&i->empty, &i->lock);
+      // get frame from queue
+      pthread_mutex_lock(&i->lock);
+      frame = i->frame_reqs.front();
+      i->frame_reqs.pop();
+      pthread_mutex_unlock(&i->lock);
+      pthread_cond_signal(&i->full);
+
+      // build/send request packet
+      if(request_frame(i, frame)) pthread_exit(nullptr);
+
+      // add frame to outstanding frames
+      outstanding_frames.insert(frame);
     }
-
-    if(!i->ready) break; // kill thread when ready is unset
-
-    // get next frame
-    frame = i->frame_reqs.front();
-    i->frame_reqs.pop();
-    pthread_mutex_unlock(&i->lock);
-    pthread_cond_signal(&i->full);
-
-    // build/send request packet
-    memcpy(send_buf, &frame, sizeof(unsigned));
-    do
+    // if no frames outstanding and no requests, wait
+    else if(outstanding_frames.empty() && i->frame_reqs.empty())
     {
-      if(i->socket->send(send_buf, PKT_SIZE)) pthread_exit(nullptr);
+      pthread_mutex_lock(&i->lock);
+      while(i->frame_reqs.empty() && i->ready)
+        pthread_cond_wait(&i->empty, &i->lock);
+
+      if(!i->ready) break;
+    }
+    // otherwise wait for packets
+    else
+    {
+      // get packet
       bzero(rec_buf, PKT_SIZE);
-    }
-    while(i->socket->receive(rec_buf, PKT_SIZE));
+      if(i->socket->receive(rec_buf, PKT_SIZE))
+      {
+        // for now just resend first in line pkt
+        if(request_frame(i, *outstanding_frames.begin())) pthread_exit(nullptr);
+        continue;
+      }
 
-    // record time stamp (printed to std err)
-    struct timeval time;
-    if(gettimeofday(&time, nullptr)) 
-    {
-      cerr << "FAILED TO READ WALL TIME!\n";
-      pthread_exit(nullptr);
+      // remove frame from outstanding packets
+      memcpy(&frame, rec_buf, sizeof(unsigned));
+
+      // make sure frame number received is valid
+      if(outstanding_frames.find(frame) != outstanding_frames.end())
+      {
+        // if frame received is next in order, retire it and any out of order
+        // frames
+        if(frame == *outstanding_frames.begin())
+        {
+          outstanding_frames.erase(frame);
+          outstanding_frames.erase(oo_frames.begin(), oo_frames.end());
+        }
+        // otherwise, add to set of out of order frames received
+        else
+        {
+          oo_frames.insert(frame);
+        }
+
+        // record time stamp (printed to std err)
+        log_frame(frame);
+      }
     }
-    stringstream ss;
-    ss << (double)time.tv_sec + (double)time.tv_usec * .000001 - (double)start_time.tv_sec - (double)start_time.tv_usec * .000001 << " " << frame << endl;
-    cerr << ss.str(); 
   }
 
   pthread_exit(nullptr);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+int request_frame(SocketInterface *i, unsigned frame)
+{
+  char send_buf[PKT_SIZE];
+  memcpy(send_buf, &frame, sizeof(unsigned));
+  int rc = i->socket->send(send_buf, PKT_SIZE);
+  if(rc) cout << "Failed to send request to server!\n";
+  return rc;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void log_frame(unsigned frame)
+{
+  struct timeval time;
+  if(gettimeofday(&time, nullptr))
+  {
+    cerr << "FAILED TO READ WALL TIME!\n";
+    pthread_exit(nullptr);
+  }
+  stringstream ss;
+  ss << (double)time.tv_sec + (double)time.tv_usec * .000001 -
+        (double)start_time.tv_sec - (double)start_time.tv_usec * .000001
+     << " " << frame << endl;
+  cerr << ss.str();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

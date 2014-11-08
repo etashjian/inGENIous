@@ -14,6 +14,7 @@
 #include <fstream>
 #include <vector>
 #include <queue>
+#include <set>
 #include <pthread.h>
 #include <sys/time.h>
 #include <sstream>
@@ -88,12 +89,20 @@ int stream_data(std::vector<SocketInterface>& ifs,
 void* server_thread(void *intf);
 
 /**
- * \fn int init_server(const char *file, ClientSocket& socket)
- * \brief Sends init message to server to open and prepare to send file
- * \param i SocketInterface of socket thread calling init
- * \return zero if successful, non-zero on fail
+ * \fn int request_frame(SocketInterface *i, unsigned frame)
+ * \brief Sends frame request to server
+ * \param i SocketInterface for calling server thread
+ * \param frame Frame number requested
+ * \return Zero if successful, non-zero otherwise
  */
-int init_server(SocketInterface *i);
+ int request_frame(SocketInterface *i, unsigned frame);
+
+/**
+ * \fn void log_frame(unsigned frame)
+ * \brief Prints frame and recieve time to std err
+ * \param frame Frame logged
+ */
+ void log_frame(unsigned frame);
 
 ////////////////////////////////////////////////////////////////////////////////
 #endif
