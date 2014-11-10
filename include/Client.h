@@ -15,6 +15,7 @@
 #include <vector>
 #include <queue>
 #include <set>
+#include <unordered_set>
 #include <pthread.h>
 #include <sys/time.h>
 #include <sstream>

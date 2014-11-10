@@ -153,7 +153,8 @@ void* server_thread(void *intf)
   SocketInterface *i = static_cast<SocketInterface*>(intf);
   unsigned frame = 0;
   char rec_buf[PKT_SIZE];
-  set<unsigned> outstanding_frames, oo_frames;
+  queue<unsigned> outstanding_frames;
+  unordered_set<unsigned> oo_frames;
   unsigned window_size = INIT_WINDOW_SIZE;
 
   // set thread to ready
@@ -176,7 +177,7 @@ void* server_thread(void *intf)
       if(request_frame(i, frame)) pthread_exit(nullptr);
 
       // add frame to outstanding frames
-      outstanding_frames.insert(frame);
+      outstanding_frames.push(frame);
     }
     // if no frames outstanding and no requests, wait
     else if(outstanding_frames.empty() && i->frame_reqs.empty())
@@ -195,32 +196,32 @@ void* server_thread(void *intf)
       if(i->socket->receive(rec_buf, PKT_SIZE))
       {
         // for now just resend first in line pkt
-        if(request_frame(i, *outstanding_frames.begin())) pthread_exit(nullptr);
+        if(request_frame(i, outstanding_frames.front())) pthread_exit(nullptr);
         continue;
       }
 
       // remove frame from outstanding packets
       memcpy(&frame, rec_buf, sizeof(unsigned));
 
-      // make sure frame number received is valid
-      if(outstanding_frames.find(frame) != outstanding_frames.end())
+      // if frame received is next in order
+      if(frame == outstanding_frames.front())
       {
-        // if frame received is next in order, retire it and any out of order
-        // frames
-        if(frame == *outstanding_frames.begin())
+        outstanding_frames.pop();
+        while(outstanding_frames.size() && 
+              oo_frames.find(outstanding_frames.front()) != oo_frames.end())
         {
-          outstanding_frames.erase(frame);
-          outstanding_frames.erase(oo_frames.begin(), oo_frames.end());
+          oo_frames.erase(oo_frames.find(outstanding_frames.front()));
+          outstanding_frames.pop();
         }
-        // otherwise, add to set of out of order frames received
-        else
-        {
-          oo_frames.insert(frame);
-        }
-
-        // record time stamp (printed to std err)
-        log_frame(frame);
       }
+      // otherwise, add to set of out of order frames received
+      else
+      {
+        oo_frames.insert(frame);
+      }
+
+      // record time stamp (printed to std err)
+      log_frame(frame);
     }
   }
 
