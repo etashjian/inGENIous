@@ -95,6 +95,7 @@ int start_servers(vector<SocketInterface>& ifs,
   int rc = 0;
   for(unsigned i = 0; i < sockets.size(); i++)
   {
+    ifs[i].id = i;
     ifs[i].socket = &sockets[i];
     ifs[i].file = file;
     rc = pthread_create(&threads[i], nullptr, server_thread, (void*) &ifs[i]);
@@ -127,7 +128,9 @@ int stream_data(vector<SocketInterface>& ifs,
     // push request
     pthread_mutex_lock(&ifs[server].lock);
     while(ifs[server].frame_reqs.size() == MAX_QUEUE_SIZE)
+    {
       pthread_cond_wait(&ifs[server].full, &ifs[server].lock);
+    }
 
     ifs[server].frame_reqs.push(index);
     pthread_mutex_unlock(&ifs[server].lock);
@@ -161,7 +164,7 @@ void* server_thread(void *intf)
   i->ready = 1;
 
   // keep waiting for packets until client signals close
-  while(i->ready)
+  while(1)
   {
     // if window not full and packets available, get/send them
     if(outstanding_frames.size() < window_size && !i->frame_reqs.empty())
@@ -184,8 +187,11 @@ void* server_thread(void *intf)
     {
       pthread_mutex_lock(&i->lock);
       while(i->frame_reqs.empty() && i->ready)
+      {
         pthread_cond_wait(&i->empty, &i->lock);
+      }
 
+      pthread_mutex_unlock(&i->lock);
       if(!i->ready) break;
     }
     // otherwise wait for packets
@@ -210,7 +216,7 @@ void* server_thread(void *intf)
         while(outstanding_frames.size() && 
               oo_frames.find(outstanding_frames.front()) != oo_frames.end())
         {
-          oo_frames.erase(oo_frames.find(outstanding_frames.front()));
+          oo_frames.erase(outstanding_frames.front());
           outstanding_frames.pop();
         }
       }
