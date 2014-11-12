@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 
   // stream file
   cout << "Streaming file... " << flush;
-  if (stream_data(ifs, threads, atoi(argv[1])))
+  if (stream_data_non_blocking(ifs, threads, atoi(argv[1])))
   {
     cerr << "Failed to stream file!\n";
     exit(-1);
@@ -150,7 +150,7 @@ int stream_data(vector<SocketInterface>& ifs,
   return 0; // exit successfully
 }
 
-int stream_data_no_block(vector<SocketInterface>& ifs,
+int stream_data_non_blocking(vector<SocketInterface>& ifs,
                 vector<pthread_t>& threads,
                 unsigned num_frames)
 {

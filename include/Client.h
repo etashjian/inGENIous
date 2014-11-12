@@ -82,6 +82,9 @@ int start_servers(std::vector<SocketInterface>& ifs,
 int stream_data(std::vector<SocketInterface>& ifs, 
                 std::vector<pthread_t>& threads,
                 unsigned num_frames);
+int stream_data_non_blocking(std::vector<SocketInterface>& ifs, 
+                std::vector<pthread_t>& threads,
+                unsigned num_frames);
 
 /**
  * \fn void* server_thread(void *intf)
