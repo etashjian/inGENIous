@@ -150,7 +150,7 @@ int stream_data(vector<SocketInterface>& ifs,
   return 0; // exit successfully
 }
 
-int stream_data2(vector<SocketInterface>& ifs,
+int stream_data_no_block(vector<SocketInterface>& ifs,
                 vector<pthread_t>& threads,
                 unsigned num_frames)
 {
@@ -165,14 +165,13 @@ int stream_data2(vector<SocketInterface>& ifs,
   unsigned server = 0;
   for(unsigned index = 0; index < num_frames; index++)
   {
-    // push request
-    pthread_mutex_lock(&ifs[server].lock);
+    // find a request thread with space in its queue
     while(ifs[server].frame_reqs.size() == MAX_QUEUE_SIZE)
     {
-      //pthread_cond_wait(&ifs[server].full, &ifs[server].lock);
       server = (server + 1) % ifs.size();
     }
-
+    // push request
+    pthread_mutex_lock(&ifs[server].lock);
     ifs[server].frame_reqs.push(index);
     pthread_mutex_unlock(&ifs[server].lock);
     pthread_cond_signal(&ifs[server].empty);
