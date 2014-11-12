@@ -12,7 +12,7 @@ while(<>){
 	#print $2;
 	push(@times,$1);
 	$count++;
-	$maxrate = $2 / $times[0];
+	#$maxrate = $2 / $times[0];
 }
 #print "maxrate: $maxrate\n";
 #print "$times[0]\n";
@@ -23,10 +23,10 @@ my @waits;
 my $rate = 1;
 my @rates;
 #for (my $i = $times[0]; $i < 5; $i+=.1){
-for (my $i = .1; $i < 2; $i+=.1){
+for (my $i = 0; $i < 3; $i+=.1){
 	#print $i;
 	$wait = $i;
-	for (my $j = 1; $j <= $maxrate; $j+=10){
+	for (my $j = 1; $j <= 200; $j+=10){
 		#print " $j\n";
 		$rate = $j;
 		#print "$rate(x - $wait)\n";

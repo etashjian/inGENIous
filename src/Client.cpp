@@ -150,6 +150,47 @@ int stream_data(vector<SocketInterface>& ifs,
   return 0; // exit successfully
 }
 
+int stream_data2(vector<SocketInterface>& ifs,
+                vector<pthread_t>& threads,
+                unsigned num_frames)
+{
+  // initialize reference time
+  if(gettimeofday(&start_time, nullptr))
+  {
+    cerr << "FAILED TO INITIALIZE REFERENCE TIME\n";
+    return -1;
+  }
+
+  // for now just evenly spread requests across servers
+  unsigned server = 0;
+  for(unsigned index = 0; index < num_frames; index++)
+  {
+    // push request
+    pthread_mutex_lock(&ifs[server].lock);
+    while(ifs[server].frame_reqs.size() == MAX_QUEUE_SIZE)
+    {
+      //pthread_cond_wait(&ifs[server].full, &ifs[server].lock);
+      server = (server + 1) % ifs.size();
+    }
+
+    ifs[server].frame_reqs.push(index);
+    pthread_mutex_unlock(&ifs[server].lock);
+    pthread_cond_signal(&ifs[server].empty);
+
+    // update pos and server
+    //server = (server + 1) % ifs.size();
+  }
+
+  // signal done to all threads
+  for(unsigned i = 0; i < ifs.size(); i++)
+  {
+    while(!ifs[i].frame_reqs.empty());
+    ifs[i].ready = 0;
+  }
+
+  return 0; // exit successfully
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 void* server_thread(void *intf)
 {
