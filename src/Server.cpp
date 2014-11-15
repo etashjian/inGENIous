@@ -32,17 +32,24 @@ int main (int argc, char **argv)
   // random seed
   srand(time(nullptr));
 
+  // initialize reference time
+  if(gettimeofday(&start_time, nullptr))
+  {
+    cerr << "FAILED TO INITIALIZE REFERENCE TIME\n";
+    return -1;
+  }
 
   // start serving
   while (1)
   {
     // wait for start message
     if(s.receive(buf, 128)) exit(-1);
-    cout << "Received a datagram: " << flush;
+    //cout << "Received a datagram: " << flush;
 
     // pull out index
     unsigned index;
     memcpy(&index, buf, PKT_HDR_SIZE);
+    log_frame(index);
 
     // build random message (using letters for easy visual checking)
     for(unsigned i = 0; i < PKT_DATA_SIZE; i++)
@@ -55,9 +62,26 @@ int main (int argc, char **argv)
       cout << "FAILED TO SEND PACKET!\n";
       return -1;
     }
+    log_frame(index);
   }
 
   return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void log_frame(unsigned frame)
+{
+  struct timeval time;
+  if(gettimeofday(&time, nullptr))
+  {
+    cerr << "FAILED TO READ WALL TIME!\n";
+    pthread_exit(nullptr);
+  }
+  stringstream ss;
+  ss << (double)time.tv_sec + (double)time.tv_usec * .000001 -
+        (double)start_time.tv_sec - (double)start_time.tv_usec * .000001
+     << " " << frame << endl;
+  cerr << ss.str();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
