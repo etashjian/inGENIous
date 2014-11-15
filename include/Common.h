@@ -9,7 +9,7 @@
 #define COMMON_H
 
 ////////////////////////////////////////////////////////////////////////////////
-const unsigned FRAME_SIZE = 128; /// Size of move frame
+const unsigned FRAME_SIZE = 1024; /// Size of move frame
 const unsigned PKTS_PER_FRAME = 1; /// Number of pkts frame is split across
 const unsigned PKT_HDR_SIZE = sizeof(unsigned); // Index number header
 const unsigned PKT_DATA_SIZE = FRAME_SIZE / PKTS_PER_FRAME;

@@ -50,11 +50,6 @@ int ClientSocket::configure_timeout(unsigned to_sec, unsigned to_usec)
     return -1;
   }
 
-  int n;
-  unsigned m = sizeof(n);
-  getsockopt(sock, SOL_SOCKET,SO_RCVBUF, (void *)&n, &m);
-  cout << "BUFFER SIZE: " << n << endl;
-
   return 0;
 }
 

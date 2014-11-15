@@ -28,17 +28,27 @@ int main(int argc, char **argv)
   unsigned window_size = init_window_size;
   queue<unsigned> outstanding_frames;
   unordered_set<unsigned> oo_frames;
-  unsigned frame = 0;
+  unsigned frame = 1;
+  unsigned rec_frame = 0;
   ClientSocket s = sockets[0];
+
+  // initialize reference time
+  if(gettimeofday(&start_time, nullptr))
+  {
+    cerr << "FAILED TO INITIALIZE REFERENCE TIME\n";
+    return -1;
+  }
 
   while(1)  
   {
-    if(outstanding_frames.size() < window_size)
-    {  
+    if(outstanding_frames.size() < window_size && frame <= num_frames)
+    {
       char send_buf[PKT_SIZE];
       memcpy(send_buf, &frame, sizeof(unsigned));
       int rc = s.send(send_buf, PKT_SIZE);
       if(rc) exit(-1);
+      log_frame(frame);
+      outstanding_frames.push(frame);
       frame++;
     }
     else
@@ -53,11 +63,13 @@ int main(int argc, char **argv)
       }
 
       // remove frame from outstanding packets
-      memcpy(&frame, rec_buf, sizeof(unsigned));
+      memcpy(&rec_frame, rec_buf, sizeof(unsigned));
 
       // if frame received is next in order
-      if(frame == outstanding_frames.front())
+      if(rec_frame == outstanding_frames.front())
       {
+        log_frame(rec_frame);
+        if(rec_frame == num_frames) exit(0);
         outstanding_frames.pop();
         while(outstanding_frames.size() && 
               oo_frames.find(outstanding_frames.front()) != oo_frames.end())
@@ -69,11 +81,9 @@ int main(int argc, char **argv)
       // otherwise, add to set of out of order frames received
       else
       {
-        oo_frames.insert(frame);
+        log_frame(rec_frame);
+        oo_frames.insert(rec_frame);
       }
-
-      // record time stamp (printed to std err)
-      log_frame(frame);
     }
   }
 
