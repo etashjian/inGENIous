@@ -13,11 +13,7 @@ using namespace std;
 int main(int argc, char **argv)
 {
   // check args
-  if (argc != 2)
-  {
-    cerr << "Usage: Client <#frames>\n";
-    exit(-1);
-  }
+  if (parse_cmdline(argc, argv)) exit(-1);
 
   // setup sockets
   vector<ClientSocket> sockets;
@@ -33,7 +29,7 @@ int main(int argc, char **argv)
   cout << "Launching threads... " << flush;
   vector<SocketInterface> ifs(sockets.size());
   vector<pthread_t> threads(sockets.size());
-  if(start_servers(ifs, threads, sockets, argv[1]))
+  if(start_servers(ifs, threads, sockets))
   {
     cerr << "Failed to start servers!\n";
     exit(-1);
@@ -42,7 +38,7 @@ int main(int argc, char **argv)
 
   // stream file
   cout << "Streaming file... " << flush;
-  if (stream_data_non_blocking(ifs, threads, atoi(argv[1])))
+  if (stream_data_non_blocking(ifs, threads))
   {
     cerr << "Failed to stream file!\n";
     exit(-1);
@@ -57,6 +53,69 @@ int main(int argc, char **argv)
     pthread_join(threads[i], nullptr);
   }
   cout << "done\n";
+
+  return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+void print_usage()
+{
+  cout << "usage: Client -n <# frames> [-q <max queue size>] "
+       << "[-w <window size>]\n";
+}
+
+////////////////////////////////////////////////////////////////////////////////
+int parse_cmdline(int argc, char **argv)
+{
+  int c;
+
+  while(1)
+  {
+    // command line options
+    static struct option program_options[] =
+    {
+      {"Number of Frames to xmit", required_argument, 0, 'n'},
+      {"Window Size", required_argument, 0, 'w'},
+      {"Request Thread Queue Size", required_argument, 0, 'q'},
+      {0, 0, 0, 0}
+    };
+
+    int option_index = 0;
+    c = getopt_long(argc, argv, "n:w:q:", program_options, &option_index);
+
+    if(c == -1) break; // detect quit condition
+  
+    switch(c)
+    {
+      case 'n':
+        num_frames = atoi(optarg);
+        break;
+
+      case 'w':
+        init_window_size = atoi(optarg);
+        break;
+
+      case 'q':
+        max_queue_size = atoi(optarg);
+        break;
+
+      case '?':  
+        print_usage();
+        return -1;
+
+      default:
+        print_usage();
+        return -1;
+    }
+  }
+
+  // check that some number of frames has been specified
+  if(num_frames <= 0)
+  {
+    cout << "Must send 1 or more frames!\n";
+    print_usage();
+    return -1;
+  }
 
   return 0;
 }
@@ -88,8 +147,7 @@ int parse_config_file(const char *filename, vector<ClientSocket>& sockets)
 ////////////////////////////////////////////////////////////////////////////////
 int start_servers(vector<SocketInterface>& ifs,
                   vector<pthread_t>& threads,
-                  vector<ClientSocket>& sockets,
-                  char *file)
+                  vector<ClientSocket>& sockets)
 {
   // Initialize threads
   int rc = 0;
@@ -97,7 +155,6 @@ int start_servers(vector<SocketInterface>& ifs,
   {
     ifs[i].id = i;
     ifs[i].socket = &sockets[i];
-    ifs[i].file = file;
     rc = pthread_create(&threads[i], nullptr, server_thread, (void*) &ifs[i]);
     if(rc)
     {
@@ -111,8 +168,7 @@ int start_servers(vector<SocketInterface>& ifs,
 
 ////////////////////////////////////////////////////////////////////////////////
 int stream_data(vector<SocketInterface>& ifs,
-                vector<pthread_t>& threads,
-                unsigned num_frames)
+                vector<pthread_t>& threads)
 {
   // initialize reference time
   if(gettimeofday(&start_time, nullptr))
@@ -127,7 +183,7 @@ int stream_data(vector<SocketInterface>& ifs,
   {
     // push request
     pthread_mutex_lock(&ifs[server].lock);
-    while(ifs[server].frame_reqs.size() == MAX_QUEUE_SIZE)
+    while(ifs[server].frame_reqs.size() == max_queue_size)
     {
       pthread_cond_wait(&ifs[server].full, &ifs[server].lock);
     }
@@ -151,8 +207,7 @@ int stream_data(vector<SocketInterface>& ifs,
 }
 
 int stream_data_non_blocking(vector<SocketInterface>& ifs,
-                vector<pthread_t>& threads,
-                unsigned num_frames)
+                vector<pthread_t>& threads)
 {
   // initialize reference time
   if(gettimeofday(&start_time, nullptr))
@@ -166,7 +221,7 @@ int stream_data_non_blocking(vector<SocketInterface>& ifs,
   for(unsigned index = 0; index < num_frames; index++)
   {
     // find a request thread with space in its queue
-    while(ifs[server].frame_reqs.size() == MAX_QUEUE_SIZE)
+    while(ifs[server].frame_reqs.size() == max_queue_size)
     {
       server = (server + 1) % ifs.size();
     }
@@ -198,7 +253,7 @@ void* server_thread(void *intf)
   char rec_buf[PKT_SIZE];
   queue<unsigned> outstanding_frames;
   unordered_set<unsigned> oo_frames;
-  unsigned window_size = INIT_WINDOW_SIZE;
+  unsigned window_size = init_window_size;
 
   // set thread to ready
   i->ready = 1;

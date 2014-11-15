@@ -19,9 +19,13 @@
 #include <pthread.h>
 #include <sys/time.h>
 #include <sstream>
+#include <getopt.h>
 
 ////////////////////////////////////////////////////////////////////////////////
 struct timeval start_time; /// Reference time
+unsigned init_window_size = DEFAULT_INIT_WINDOW_SIZE;
+unsigned max_queue_size = DEFAULT_MAX_QUEUE_SIZE;
+unsigned num_frames = 0;
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
@@ -32,7 +36,6 @@ struct SocketInterface
 {
   // Data
   ClientSocket *socket; /// Socket to use
-  char *file; /// File to transmit
   std::queue<unsigned> frame_reqs; /// Frame offset of next requested frames
 
   // Control signals
@@ -47,7 +50,16 @@ struct SocketInterface
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
- * \fn bool parse_config_file(char *filename, vector<ClientSocket>& sockets)
+ * \fn int parse_cmdline(int argc, char **argv)
+ * \brief Parses and handles command line arguments
+ * \param argc Program argc input
+ * \param argv Program argv input
+ * \return zero if successful, non-zero otherwise
+ */
+int parse_cmdline(int argc, char **argv);
+
+/**
+ * \fn int parse_config_file(char *filename, vector<ClientSocket>& sockets)
  * \brief Parses configuration file with hostnames and ports of all servers 
  *        avilable, and opens sockets for them accordingly
  * \param filename Name of configuration file
@@ -63,28 +75,23 @@ int parse_config_file(const char *filename, std::vector<ClientSocket>& sockets);
  * \param ifs Vector of SocketInterfaces to use indexed by server
  * \param threads Vector of pthreads indexed by server
  * \param sockets ClientSockets for the server threads
- * \param file File for servers to load
  * \return zero if parse succeeds, non-zero on fail
  */
 int start_servers(std::vector<SocketInterface>& ifs, 
                   std::vector<pthread_t>& threads,
-                  std::vector<ClientSocket>& sockets,
-                  char * file);
+                  std::vector<ClientSocket>& sockets);
 
 /**
  * \fn int stream_data(vector<SocketInterface>& ifs, vector<pthread_t> threads)
  * \brief Streams file 
  * \param ifs Vector of SocketInterfaces indexed by server
  * \param threads Vector of pthreads indexed by server
- * \param num_frames Number of frames to receive
  * \return zero if success, non-zero on fail
  */
 int stream_data(std::vector<SocketInterface>& ifs, 
-                std::vector<pthread_t>& threads,
-                unsigned num_frames);
+                std::vector<pthread_t>& threads);
 int stream_data_non_blocking(std::vector<SocketInterface>& ifs, 
-                std::vector<pthread_t>& threads,
-                unsigned num_frames);
+                std::vector<pthread_t>& threads);
 
 /**
  * \fn void* server_thread(void *intf)
