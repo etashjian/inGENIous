@@ -5,7 +5,7 @@
  * \brief Implenetation of Client executable
  *----------------------------------------------------------------------------*/
 
-#include "Client.h"
+#include "SimpleClient.h"
 
 using namespace std;
 
@@ -50,6 +50,7 @@ int main(int argc, char **argv)
       log_frame(frame);
       outstanding_frames.push(frame);
       frame++;
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     else
     {
