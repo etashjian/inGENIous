@@ -12,7 +12,7 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////
 int main (int argc, char **argv)
 {
-  char buf[PKT_SIZE]; // send/receive buffer
+  char buf[RESP_PKT_SIZE]; // send/receive buffer
   ifstream in; // file input stream
 
   // check args
@@ -43,7 +43,8 @@ int main (int argc, char **argv)
   while (1)
   {
     // wait for start message
-    if(s.receive(buf, 128)) exit(-1);
+    bzero(buf, RESP_PKT_SIZE);
+    if(s.receive(buf, REQ_PKT_SIZE)) exit(-1);
     //cout << "Received a datagram: " << flush;
 
     // pull out index
@@ -57,7 +58,7 @@ int main (int argc, char **argv)
 
     // send response
     cout << "sending index " << index << endl;
-    if(s.send(buf, PKT_SIZE))
+    if(s.send(buf, RESP_PKT_SIZE))
     {
       cout << "FAILED TO SEND PACKET!\n";
       return -1;

@@ -43,9 +43,9 @@ int main(int argc, char **argv)
   {
     if(outstanding_frames.size() < window_size && frame <= num_frames)
     {
-      char send_buf[PKT_SIZE];
+      char send_buf[REQ_PKT_SIZE];
       memcpy(send_buf, &frame, sizeof(unsigned));
-      int rc = s.send(send_buf, PKT_SIZE);
+      int rc = s.send(send_buf, REQ_PKT_SIZE);
       if(rc) exit(-1);
       log_frame(frame);
       outstanding_frames.push(frame);
@@ -55,9 +55,9 @@ int main(int argc, char **argv)
     else
     {
       // get packet
-      char rec_buf[PKT_SIZE];
-      bzero(rec_buf, PKT_SIZE);
-      if(s.receive(rec_buf, PKT_SIZE))
+      char rec_buf[RESP_PKT_SIZE];
+      bzero(rec_buf, RESP_PKT_SIZE);
+      if(s.receive(rec_buf, RESP_PKT_SIZE))
       {
         // for now just resend first in line pkt
         exit(-1);

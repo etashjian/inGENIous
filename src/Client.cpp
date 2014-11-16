@@ -250,7 +250,7 @@ void* server_thread(void *intf)
 {
   SocketInterface *i = static_cast<SocketInterface*>(intf);
   unsigned frame = 0;
-  char rec_buf[PKT_SIZE];
+  char rec_buf[RESP_PKT_SIZE];
   queue<unsigned> outstanding_frames;
   unordered_set<unsigned> oo_frames;
   unsigned window_size = init_window_size;
@@ -293,8 +293,8 @@ void* server_thread(void *intf)
     else
     {
       // get packet
-      bzero(rec_buf, PKT_SIZE);
-      if(i->socket->receive(rec_buf, PKT_SIZE))
+      bzero(rec_buf, RESP_PKT_SIZE);
+      if(i->socket->receive(rec_buf, RESP_PKT_SIZE))
       {
         // for now just resend first in line pkt
         if(request_frame(i, outstanding_frames.front())) pthread_exit(nullptr);
@@ -332,9 +332,9 @@ void* server_thread(void *intf)
 ////////////////////////////////////////////////////////////////////////////////
 int request_frame(SocketInterface *i, unsigned frame)
 {
-  char send_buf[PKT_SIZE];
+  char send_buf[REQ_PKT_SIZE];
   memcpy(send_buf, &frame, sizeof(unsigned));
-  int rc = i->socket->send(send_buf, PKT_SIZE);
+  int rc = i->socket->send(send_buf, REQ_PKT_SIZE);
   if(rc) cout << "Failed to send request to server!\n";
   return rc;
 }
