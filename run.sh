@@ -1,9 +1,15 @@
 #! /bin/bash
 
-for queue in {1..10}
+for packets in 1000
 do
-	for window in {1..10}
+	echo "packets "$packets
+	for queue in 1 2 3
 	do
-		./bin/Client -n 100 -q $queue -w $window 2> packets_100.queue_$queue.window_$window.data
+		echo "  queue size "$queue
+		for window in 1 2 3
+		do
+			echo "    window size "$window
+			./bin/Client -n $packets -q $queue -w $window 1> analysis/output/packets_$packets.queue_$queue.window_$window.output 2> analysis/data/packets_100.queue_$queue.window_$window.data
+		done
 	done
 done
