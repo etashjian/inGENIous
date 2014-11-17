@@ -9,7 +9,7 @@ set xlabel "Time (seconds)"
 set ylabel "Frame Number"
 set key l
 #set xr [0:6]
-set yr [0:10000]
+set yr [0:1000]
 
 #plot "data1.test", (x-1), 0.5*(x-1), 1.5*(x-1)
 #plot "data1.test", 1.1*(x - 1)
@@ -19,6 +19,7 @@ set yr [0:10000]
 #plot "temp", 1805*(x - 0.1)
 #plot "temp.data2", 111*(x-.2)
 #plot "temp.data", 84*(x-.2)
-plot "temp.data", "temp.data2"
+#plot "temp.data", "temp.data2"
 #plot "example.data", 100*(x - 1)
+plot "data/packets_100.queue_1.window_1.data","data/packets_100.queue_2.window_2.data","data/packets_100.queue_3.window_3.data"
 pause -1
