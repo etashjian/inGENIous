@@ -225,6 +225,7 @@ int stream_data_non_blocking(vector<SocketInterface>& ifs,
     {
       server = (server + 1) % ifs.size();
     }
+    cout << "sending request on server_" << server << endl;
     // push request
     pthread_mutex_lock(&ifs[server].lock);
     ifs[server].frame_reqs.push(index);
@@ -254,6 +255,7 @@ void* server_thread(void *intf)
   queue<unsigned> outstanding_frames;
   unordered_set<unsigned> oo_frames;
   unsigned window_size = init_window_size;
+  //cout << window_size << endl;
 
   // set thread to ready
   i->ready = 1;
@@ -264,6 +266,7 @@ void* server_thread(void *intf)
     // if window not full and packets available, get/send them
     if(outstanding_frames.size() < window_size && !i->frame_reqs.empty())
     {
+      //cout << "thread " << intf << " sending request" << endl;
       // get frame from queue
       pthread_mutex_lock(&i->lock);
       frame = i->frame_reqs.front();
@@ -280,18 +283,19 @@ void* server_thread(void *intf)
     // if no frames outstanding and no requests, wait
     else if(outstanding_frames.empty() && i->frame_reqs.empty())
     {
+      //cout << "thread " << intf << " going to sleep" << endl;
       pthread_mutex_lock(&i->lock);
       while(i->frame_reqs.empty() && i->ready)
       {
         pthread_cond_wait(&i->empty, &i->lock);
       }
-
       pthread_mutex_unlock(&i->lock);
       if(!i->ready) break;
     }
     // otherwise wait for packets
     else
     {
+      //cout << "thread " << intf << " wait for packet" << endl;
       // get packet
       bzero(rec_buf, RESP_PKT_SIZE);
       if(i->socket->receive(rec_buf, RESP_PKT_SIZE))
