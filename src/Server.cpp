@@ -43,27 +43,30 @@ int main (int argc, char **argv)
   while (1)
   {
     // wait for start message
+    log_frame(0);
     bzero(buf, RESP_PKT_SIZE);
     if(s.receive(buf, REQ_PKT_SIZE)) exit(-1);
+    log_frame(1);
     //cout << "Received a datagram: " << flush;
 
     // pull out index
     unsigned index;
     memcpy(&index, buf, PKT_HDR_SIZE);
-    log_frame(index);
+    //log_frame(index);
 
     // build random message (using letters for easy visual checking)
     for(unsigned i = 0; i < PKT_DATA_SIZE; i++)
       *(buf + PKT_HDR_SIZE + i) = static_cast<char>('a' + rand()%26);
 
     // send response
+    log_frame(2);
     cout << "sending index " << index << endl;
     if(s.send(buf, RESP_PKT_SIZE))
     {
       cout << "FAILED TO SEND PACKET!\n";
       return -1;
     }
-    log_frame(index);
+    //log_frame(index);
   }
 
   return 0;
