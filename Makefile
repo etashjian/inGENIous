@@ -14,7 +14,7 @@ LFLAGS= -Wall -ansi -O0 -pthread
 #LFLAGS= -Wall -ansi -O3 -pthread
 
 
-all: $(BINDIR)/Server $(BINDIR)/Client $(BINDIR)/SimpleClient
+all: $(BINDIR)/Server $(BINDIR)/Client $(BINDIR)/SimpleClient $(BINDIR)/SimpleServer
 
 $(BINDIR)/Server: $(addprefix $(OBJDIR)/, $(OBJS) Server.o)
 	$(CXX) $(addprefix $(OBJDIR)/, $(OBJS) Server.o) -o $@ $(LFLAGS)
@@ -24,6 +24,9 @@ $(BINDIR)/Client : $(addprefix $(OBJDIR)/, $(OBJS) Client.o)
 
 $(BINDIR)/SimpleClient : $(addprefix $(OBJDIR)/, $(OBJS) SimpleClient.o)
 	$(CXX) $(addprefix $(OBJDIR)/, $(OBJS) SimpleClient.o) -o $@ $(LFLAGS)
+
+$(BINDIR)/SimpleServer : $(addprefix $(OBJDIR)/, $(OBJS) SimpleServer.o)
+	$(CXX) $(addprefix $(OBJDIR)/, $(OBJS) SimpleServer.o) -o $@ $(LFLAGS)
 
 $(OBJDIR)/%.o: $(SRCDIR)/%.cpp $(INCDIR)/*.h
 	$(CXX) -c $< -o $@ $(CPPFLAGS)

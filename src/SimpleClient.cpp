@@ -25,10 +25,10 @@ int main(int argc, char **argv)
   }
   cout << "done\n";
 
-  unsigned window_size = init_window_size;
+  //unsigned window_size = init_window_size;
   queue<unsigned> outstanding_frames;
   unordered_set<unsigned> oo_frames;
-  unsigned frame = 1;
+  //unsigned frame = 1;
   unsigned rec_frame = 0;
   ClientSocket s = sockets[0];
 
@@ -39,6 +39,21 @@ int main(int argc, char **argv)
     return -1;
   }
 
+  while(1)
+  {
+    char rec_buf[RESP_PKT_SIZE];
+    bzero(rec_buf, RESP_PKT_SIZE);
+    if(s.receive(rec_buf, RESP_PKT_SIZE))
+    {
+      // for now just resend first in line pkt
+      exit(-1);
+    }
+
+    memcpy(&rec_frame, rec_buf, sizeof(unsigned));
+    log_frame(rec_frame);
+  }
+
+  /*
   while(1)  
   {
     if(outstanding_frames.size() < window_size && frame <= num_frames)
@@ -86,7 +101,7 @@ int main(int argc, char **argv)
         oo_frames.insert(rec_frame);
       }
     }
-  }
+  }*/
 
   return 0;
 }
