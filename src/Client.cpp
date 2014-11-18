@@ -302,6 +302,7 @@ void* server_thread(void *intf)
       {
         // for now just resend first in line pkt
         if(request_frame(i, outstanding_frames.front())) pthread_exit(nullptr);
+        cout << "timeout" << endl;
         continue;
       }
 
