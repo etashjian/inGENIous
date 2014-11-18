@@ -8,7 +8,7 @@
 #include "Client.h"
 
 using namespace std;
-
+//extern queue<unsigned> index_queue;
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv)
 {
@@ -255,17 +255,17 @@ int stream_data_non_blocking_queue(vector<SocketInterface>& ifs,
     cerr << "FAILED TO INITIALIZE REFERENCE TIME\n";
     return -1;
   }
-  queue<unsigned> request_queue;
+  //queue<unsigned> request_queue;
   // set up queue of requests
   for(unsigned index = 0; index < num_frames; index++)
   {
-    request_queue.push(index);
+    index_queue.push(index);
   }
-  request_queue.push(MAX_FRAME);
+  index_queue.push(MAX_FRAME);
   // for now just evenly spread requests across servers
   unsigned server = 0;
   //for(unsigned index = 0; index < num_frames; index++)
-  while(request_queue.front() != MAX_FRAME)
+  while(index_queue.front() != MAX_FRAME)
   {
     // find a request thread with space in its queue
     while(ifs[server].frame_reqs.size() == max_queue_size)
@@ -273,8 +273,8 @@ int stream_data_non_blocking_queue(vector<SocketInterface>& ifs,
       server = (server + 1) % ifs.size();
     }
     cout << "sending request on server_" << server << endl;
-    unsigned index = request_queue.front();
-    request_queue.pop();
+    unsigned index = index_queue.front();
+    index_queue.pop();
     //cout << index << endl;
     // push request
     pthread_mutex_lock(&ifs[server].lock);
@@ -353,7 +353,7 @@ void* server_thread(void *intf)
         // for now just resend first in line pkt
         if(request_frame(i, outstanding_frames.front())) pthread_exit(nullptr);
         timeout_count++;
-        cout << "timeout " timeout_count << endl;
+        cout << "timeout " << timeout_count << endl;
         continue;
       }
 

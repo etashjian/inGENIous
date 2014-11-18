@@ -27,6 +27,8 @@ unsigned init_window_size = DEFAULT_INIT_WINDOW_SIZE;
 unsigned max_queue_size = DEFAULT_MAX_QUEUE_SIZE;
 unsigned num_frames = 0;
 
+std::queue<unsigned> index_queue;
+
 ////////////////////////////////////////////////////////////////////////////////
 /**
  * \struct SocketInterface
