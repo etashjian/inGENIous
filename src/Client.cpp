@@ -84,7 +84,7 @@ int parse_cmdline(int argc, char **argv)
     c = getopt_long(argc, argv, "n:w:q:", program_options, &option_index);
 
     if(c == -1) break; // detect quit condition
-  
+
     switch(c)
     {
       case 'n':
@@ -99,7 +99,7 @@ int parse_cmdline(int argc, char **argv)
         max_queue_size = atoi(optarg);
         break;
 
-      case '?':  
+      case '?':
         print_usage();
         return -1;
 
@@ -206,6 +206,7 @@ int stream_data(vector<SocketInterface>& ifs,
   return 0; // exit successfully
 }
 
+////////////////////////////////////////////////////////////////////////////////
 int stream_data_non_blocking(vector<SocketInterface>& ifs,
                 vector<pthread_t>& threads)
 {
@@ -250,12 +251,8 @@ int stream_data_non_blocking(vector<SocketInterface>& ifs,
 void* server_thread(void *intf)
 {
   SocketInterface *i = static_cast<SocketInterface*>(intf);
-  unsigned frame = 0;
-  char rec_buf[RESP_PKT_SIZE];
-  queue<unsigned> outstanding_frames;
-  unordered_set<unsigned> oo_frames;
-  unsigned window_size = init_window_size;
-  //cout << window_size << endl;
+  unsigned size, frame;
+  char rec_buf[SERVER_PKT_SIZE], send_buf[CLIENT_PKT_SIZE];
 
   // set thread to ready
   i->ready = 1;
@@ -263,8 +260,25 @@ void* server_thread(void *intf)
   // keep waiting for packets until client signals close
   while(1)
   {
+    // get request
+    pthread_mutex_lock(&i->lock);
+    while(!i->frame_reqs.empty()) pthread_cond_wait(&i->empty, &i->lock);
+    size = frame_reqs.front();
+    frame_reqs.pop();
+
+    // send request
+    static_cast<ClientCmd>(*send_buf) = ClientCmd::REQUEST;
+    memcpy(send_buf + CLIENT_HDR_SIZE, &size, CLIENT_DATA_SIZE);
+
+    // keep sending request until a response comes back
+    do
+    {
+      s.send(send_buf, CLIENT_PKT_SIZE);
+    }
+    while(s.)
+
     // if window not full and packets available, get/send them
-    if(outstanding_frames.size() < window_size && !i->frame_reqs.empty())
+    if(!i->frame_reqs.empty())
     {
       //cout << "thread " << intf << " sending request" << endl;
       // get frame from queue
@@ -312,7 +326,7 @@ void* server_thread(void *intf)
       if(frame == outstanding_frames.front())
       {
         outstanding_frames.pop();
-        while(outstanding_frames.size() && 
+        while(outstanding_frames.size() &&
               oo_frames.find(outstanding_frames.front()) != oo_frames.end())
         {
           oo_frames.erase(outstanding_frames.front());

@@ -12,8 +12,11 @@ using namespace std;
 ////////////////////////////////////////////////////////////////////////////////
 int main (int argc, char **argv)
 {
-  char buf[RESP_PKT_SIZE]; // send/receive buffer
+  char rec_buf[CLIENT_PKT_SIZE]; // send/receive bufs
   ifstream in; // file input stream
+  unsigned num_frames, next_frame, acked_frame; // frame info
+  queue<unsigned> outstanding_frames;
+  unsigned window_size = 10;
 
   // check args
   if (argc < 2)
@@ -22,12 +25,63 @@ int main (int argc, char **argv)
      exit(-1);
   }
 
-  // setup socket
-  cout << "Opening socket... " << flush;
+  // init server
   ServerSocket s(atoi(argv[1]));
-  if(s.init()) exit(-1);
-  cout << "ready!\n";
+  if(init(s)) exit(-1);
 
+  // start serving
+  while (1)
+  {
+    // wait for request from client
+    bzero(rec_buf, CLIENT_PKT_SIZE);
+    if(s.receive(rec_buf, CLIENT_PKT_SIZE)) exit(-1);
+
+    // command needs to be a request, drop it if not
+    if(static_cast<ClientCmd>(*rec_buf) != ClientCmd::REQUEST) continue;
+
+    // get info from client request
+    memcpy(&num_frames, rec_buf + CLIENT_HDR_SIZE, CLIENT_DATA_SIZE);
+    next_frame = 0;
+
+    while(next_frame < num_frames)
+    {
+      // if room in window send a message
+      if(outstanding_frames.size() < window_size)
+      {
+        send_frame(s, next_frame);
+        outstanding_frames.push(next_frame++);
+      }
+      // otherwise wait for acks
+      else if(s.receive(rec_buf, CLIENT_PKT_SIZE) == 0)
+      {
+        if(static_cast<ClientCmd>(*rec_buf) != ClientCmd::ACK) continue;
+        memcpy(&acked_frame, rec_buf + CLIENT_HDR_SIZE, CLIENT_DATA_SIZE);
+        while(outstanding_frames.front() < acked_frame)
+          outstanding_frames.pop();
+      }
+      // timeout
+      else
+      {
+        cout << "TIMEOUT!\n";
+        send_frame(s, outstanding_frames.front());
+      }
+    }
+  }
+
+  return 0;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+int init(ServerSocket& s)
+{
+  cout << "Initializing server... " << flush;
+
+  // init socket
+  if(s.init())
+  {
+    cout << "Failed to initialize socket!\n";
+    return -1;
+  }
 
   // random seed
   srand(time(nullptr));
@@ -35,39 +89,26 @@ int main (int argc, char **argv)
   // initialize reference time
   if(gettimeofday(&start_time, nullptr))
   {
-    cerr << "FAILED TO INITIALIZE REFERENCE TIME\n";
+    cout << "Failed to initialize reference time!\n";
     return -1;
   }
 
-  // start serving
-  while (1)
-  {
-    // wait for start message
-    log_frame(0);
-    bzero(buf, RESP_PKT_SIZE);
-    if(s.receive(buf, REQ_PKT_SIZE)) exit(-1);
-    log_frame(1);
-    //cout << "Received a datagram: " << flush;
+  cout << "ready!\n";
+  return 0;
+}
 
-    // pull out index
-    unsigned index;
-    memcpy(&index, buf, PKT_HDR_SIZE);
-    //log_frame(index);
+////////////////////////////////////////////////////////////////////////////////
+int send_frame(ServerSocket& s, unsigned frame)
+{
+  char send_buf[SERVER_PKT_SIZE];
 
-    // build random message (using letters for easy visual checking)
-    for(unsigned i = 0; i < PKT_DATA_SIZE; i++)
-      *(buf + PKT_HDR_SIZE + i) = static_cast<char>('a' + rand()%26);
+  // build message (using random letters for easy visual checking)
+  memcpy(send_buf, &frame, SERVER_HDR_SIZE);
+  for(unsigned i = 0; i < SERVER_DATA_SIZE; i++)
+    *(send_buf + SERVER_HDR_SIZE + i) = static_cast<char>('a' + rand() % 26);
 
-    // send response
-    log_frame(2);
-    cout << "sending index " << index << endl;
-    if(s.send(buf, RESP_PKT_SIZE))
-    {
-      cout << "FAILED TO SEND PACKET!\n";
-      return -1;
-    }
-    //log_frame(index);
-  }
+  // send message
+  if(s.send(send_buf, SERVER_PKT_SIZE)) return -1;
 
   return 0;
 }

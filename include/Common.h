@@ -9,12 +9,19 @@
 #define COMMON_H
 
 ////////////////////////////////////////////////////////////////////////////////
-const unsigned FRAME_SIZE = 1024; /// Size of move frame
-const unsigned PKTS_PER_FRAME = 1; /// Number of pkts frame is split across
-const unsigned PKT_HDR_SIZE = sizeof(unsigned); // Index number header
-const unsigned PKT_DATA_SIZE = FRAME_SIZE / PKTS_PER_FRAME;
-const unsigned REQ_PKT_SIZE = PKT_HDR_SIZE;
-const unsigned RESP_PKT_SIZE = PKT_HDR_SIZE + PKT_DATA_SIZE;
+enum class ClientCmd : char
+{
+  REQUEST,
+  ACK
+};
+
+////////////////////////////////////////////////////////////////////////////////
+const unsigned SERVER_HDR_SIZE = sizeof(unsigned); 
+const unsigned SERVER_DATA_SIZE = 1024; // size of frame
+const unsigned SERVER_PKT_SIZE = SERVER_HDR_SIZE + SERVER_DATA_SIZE;
+const unsigned CLIENT_HDR_SIZE = sizeof(ClientCmd);
+const unsigned CLIENT_DATA_SIZE = sizeof(unsigned); 
+const unsigned CLIENT_PKT_SIZE = CLIENT_HDR_SIZE + CLIENT_DATA_SIZE;
 
 const unsigned DEFAULT_MAX_QUEUE_SIZE = 1;
 const unsigned DEFAULT_INIT_WINDOW_SIZE = 1;
