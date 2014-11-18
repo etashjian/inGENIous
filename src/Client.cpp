@@ -6,7 +6,7 @@
  *----------------------------------------------------------------------------*/
 
 #include "Client.h"
-
+#define RESEND 0
 using namespace std;
 //extern queue<unsigned> index_queue;
 ////////////////////////////////////////////////////////////////////////////////
@@ -351,10 +351,17 @@ void* server_thread(void *intf)
       if(i->socket->receive(rec_buf, RESP_PKT_SIZE))
       {
         // for now just resend first in line pkt
-        if(request_frame(i, outstanding_frames.front())) pthread_exit(nullptr);
-        timeout_count++;
-        cout << "timeout " << timeout_count << endl;
-        continue;
+        if(RESEND){
+          if(request_frame(i, outstanding_frames.front())) pthread_exit(nullptr);
+          timeout_count++;
+          cout << "timeout " << timeout_count << endl;
+          continue;
+        }
+        else{
+          index_queue.push(outstanding_frames.front());
+          outstanding_frames.pop();
+          continue;
+        }
       }
 
       // remove frame from outstanding packets
