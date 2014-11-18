@@ -255,14 +255,14 @@ int stream_data_non_blocking_queue(vector<SocketInterface>& ifs,
     cerr << "FAILED TO INITIALIZE REFERENCE TIME\n";
     return -1;
   }
-  vector<unsigned> request_queue;
+  queue<unsigned> request_queue;
   // set up queue of requests
   for(unsigned index = 0; index < num_frames; index++)
   {
     request_queue.push(index);
   }
   // for now just evenly spread requests across servers
-  unsigned server = 0;
+  //unsigned server = 0;
   //for(unsigned index = 0; index < num_frames; index++)
   while(request_queue.size())
   {
