@@ -92,6 +92,8 @@ int stream_data(std::vector<SocketInterface>& ifs,
                 std::vector<pthread_t>& threads);
 int stream_data_non_blocking(std::vector<SocketInterface>& ifs, 
                 std::vector<pthread_t>& threads);
+int stream_data_non_blocking_queue(std::vector<SocketInterface>& ifs, 
+                std::vector<pthread_t>& threads);
 
 /**
  * \fn void* server_thread(void *intf)

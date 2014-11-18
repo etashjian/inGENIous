@@ -18,5 +18,7 @@ const unsigned RESP_PKT_SIZE = PKT_HDR_SIZE + PKT_DATA_SIZE;
 
 const unsigned DEFAULT_MAX_QUEUE_SIZE = 1;
 const unsigned DEFAULT_INIT_WINDOW_SIZE = 1;
+
+const unsigned MAX_FRAME = 99999999;
 ////////////////////////////////////////////////////////////////////////////////
 #endif

@@ -38,7 +38,7 @@ int main(int argc, char **argv)
 
   // stream file
   cout << "Streaming file... " << flush;
-  if (stream_data_non_blocking(ifs, threads))
+  if (stream_data_non_blocking_queue(ifs, threads))
   {
     cerr << "Failed to stream file!\n";
     exit(-1);
@@ -261,27 +261,26 @@ int stream_data_non_blocking_queue(vector<SocketInterface>& ifs,
   {
     request_queue.push(index);
   }
+  request_queue.push(MAX_FRAME);
   // for now just evenly spread requests across servers
-  //unsigned server = 0;
+  unsigned server = 0;
   //for(unsigned index = 0; index < num_frames; index++)
-  while(request_queue.size())
+  while(request_queue.front() != MAX_FRAME)
   {
     // find a request thread with space in its queue
-    //while(ifs[server].frame_reqs.size() == max_queue_size)
-    //{
-    //  server = (server + 1) % ifs.size();
-    //}
-    //cout << "sending request on server_" << server << endl;
+    while(ifs[server].frame_reqs.size() == max_queue_size)
+    {
+      server = (server + 1) % ifs.size();
+    }
+    cout << "sending request on server_" << server << endl;
+    unsigned index = request_queue.front();
+    request_queue.pop();
+    //cout << index << endl;
     // push request
-    //pthread_mutex_lock(&ifs[server].lock);
-    unsigned index = request_queue.pop();
-    cout << index << endl;
-    //ifs[server].frame_reqs.push(index);
-    //pthread_mutex_unlock(&ifs[server].lock);
-    //pthread_cond_signal(&ifs[server].empty);
-
-    // update pos and server
-    //server = (server + 1) % ifs.size();
+    pthread_mutex_lock(&ifs[server].lock);
+    ifs[server].frame_reqs.push(index);
+    pthread_mutex_unlock(&ifs[server].lock);
+    pthread_cond_signal(&ifs[server].empty);
   }
 
   // signal done to all threads
