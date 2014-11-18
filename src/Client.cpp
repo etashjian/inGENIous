@@ -306,6 +306,9 @@ void* server_thread(void *intf)
 
   // set thread to ready
   i->ready = 1;
+  
+  // keep a timeout counter
+  int timeout_count = 0;
 
   // keep waiting for packets until client signals close
   while(1)
@@ -349,7 +352,8 @@ void* server_thread(void *intf)
       {
         // for now just resend first in line pkt
         if(request_frame(i, outstanding_frames.front())) pthread_exit(nullptr);
-        cout << "timeout" << endl;
+        timeout_count++;
+        cout << "timeout " timeout_count << endl;
         continue;
       }
 
