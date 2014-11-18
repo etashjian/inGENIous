@@ -246,6 +246,54 @@ int stream_data_non_blocking(vector<SocketInterface>& ifs,
   return 0; // exit successfully
 }
 
+int stream_data_non_blocking_queue(vector<SocketInterface>& ifs,
+                vector<pthread_t>& threads)
+{
+  // initialize reference time
+  if(gettimeofday(&start_time, nullptr))
+  {
+    cerr << "FAILED TO INITIALIZE REFERENCE TIME\n";
+    return -1;
+  }
+  vector<unsigned> request_queue;
+  // set up queue of requests
+  for(unsigned index = 0; index < num_frames; index++)
+  {
+    request_queue.push(index);
+  }
+  // for now just evenly spread requests across servers
+  unsigned server = 0;
+  //for(unsigned index = 0; index < num_frames; index++)
+  while(request_queue.size())
+  {
+    // find a request thread with space in its queue
+    //while(ifs[server].frame_reqs.size() == max_queue_size)
+    //{
+    //  server = (server + 1) % ifs.size();
+    //}
+    //cout << "sending request on server_" << server << endl;
+    // push request
+    //pthread_mutex_lock(&ifs[server].lock);
+    unsigned index = request_queue.pop();
+    cout << index << endl;
+    //ifs[server].frame_reqs.push(index);
+    //pthread_mutex_unlock(&ifs[server].lock);
+    //pthread_cond_signal(&ifs[server].empty);
+
+    // update pos and server
+    //server = (server + 1) % ifs.size();
+  }
+
+  // signal done to all threads
+  for(unsigned i = 0; i < ifs.size(); i++)
+  {
+    while(!ifs[i].frame_reqs.empty());
+    ifs[i].ready = 0;
+  }
+
+  return 0; // exit successfully
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 void* server_thread(void *intf)
 {
