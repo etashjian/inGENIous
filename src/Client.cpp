@@ -8,7 +8,6 @@
 #include "Client.h"
 #define RESEND 0
 using namespace std;
-//extern queue<unsigned> index_queue;
 ////////////////////////////////////////////////////////////////////////////////
 int main(int argc, char **argv)
 {
@@ -293,6 +292,53 @@ int stream_data_non_blocking_queue(vector<SocketInterface>& ifs,
   return 0; // exit successfully
 }
 
+int stream_data_non_blocking_deque(vector<SocketInterface>& ifs,
+                vector<pthread_t>& threads)
+{
+  // initialize reference time
+  if(gettimeofday(&start_time, nullptr))
+  {
+    cerr << "FAILED TO INITIALIZE REFERENCE TIME\n";
+    return -1;
+  }
+  //queue<unsigned> request_queue;
+  // set up queue of requests
+  for(unsigned index = 0; index < num_frames; index++)
+  {
+    index_deque.push_back(index);
+  }
+  index_deque.push_back(MAX_FRAME);
+  // for now just evenly spread requests across servers
+  unsigned server = 0;
+  //for(unsigned index = 0; index < num_frames; index++)
+  while(index_queue.front() != MAX_FRAME)
+  {
+    // find a request thread with space in its queue
+    while(ifs[server].frame_reqs.size() == max_queue_size)
+    {
+      server = (server + 1) % ifs.size();
+    }
+    cout << "sending request on server_" << server << endl;
+    unsigned index = index_queue.front();
+    index_deque.pop_front();
+    //cout << index << endl;
+    // push request
+    pthread_mutex_lock(&ifs[server].lock);
+    ifs[server].frame_reqs.push(index);
+    pthread_mutex_unlock(&ifs[server].lock);
+    pthread_cond_signal(&ifs[server].empty);
+  }
+
+  // signal done to all threads
+  for(unsigned i = 0; i < ifs.size(); i++)
+  {
+    while(!ifs[i].frame_reqs.empty());
+    ifs[i].ready = 0;
+  }
+
+  return 0; // exit successfully
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 void* server_thread(void *intf)
 {
@@ -358,7 +404,8 @@ void* server_thread(void *intf)
           continue;
         }
         else{
-          index_queue.push(outstanding_frames.front());
+          //index_queue.push(outstanding_frames.front());
+          index_deque.push_front(outstanding_frames.front());
           outstanding_frames.pop();
           continue;
         }

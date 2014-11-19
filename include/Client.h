@@ -27,7 +27,8 @@ unsigned init_window_size = DEFAULT_INIT_WINDOW_SIZE;
 unsigned max_queue_size = DEFAULT_MAX_QUEUE_SIZE;
 unsigned num_frames = 0;
 
-std::queue<unsigned> index_queue;
+//std::queue<unsigned> index_queue;
+std::deque<unsigned> index_deque;
 
 ////////////////////////////////////////////////////////////////////////////////
 /**
@@ -96,7 +97,9 @@ int stream_data_non_blocking(std::vector<SocketInterface>& ifs,
                 std::vector<pthread_t>& threads);
 int stream_data_non_blocking_queue(std::vector<SocketInterface>& ifs, 
                 std::vector<pthread_t>& threads);
-
+int stream_data_non_blocking_deque(std::vector<SocketInterface>& ifs, 
+                std::vector<pthread_t>& threads);
+                
 /**
  * \fn void* server_thread(void *intf)
  * \brief Producer thread for a given server
