@@ -83,7 +83,7 @@ int parse_cmdline(int argc, char **argv)
     c = getopt_long(argc, argv, "n:w:q:", program_options, &option_index);
 
     if(c == -1) break; // detect quit condition
-  
+
     switch(c)
     {
       case 'n':
@@ -98,7 +98,7 @@ int parse_cmdline(int argc, char **argv)
         max_queue_size = atoi(optarg);
         break;
 
-      case '?':  
+      case '?':
         print_usage();
         return -1;
 
@@ -258,13 +258,13 @@ int stream_data_non_blocking_queue(vector<SocketInterface>& ifs,
   // set up queue of requests
   for(unsigned index = 0; index < num_frames; index++)
   {
-    index_queue.push(index);
+    index_deque.push_back(index);
   }
-  index_queue.push(MAX_FRAME);
+  index_deque.push_back(MAX_FRAME);
   // for now just evenly spread requests across servers
   unsigned server = 0;
   //for(unsigned index = 0; index < num_frames; index++)
-  while(index_queue.front() != MAX_FRAME)
+  while(index_deque.front() != MAX_FRAME)
   {
     // find a request thread with space in its queue
     while(ifs[server].frame_reqs.size() == max_queue_size)
@@ -272,8 +272,8 @@ int stream_data_non_blocking_queue(vector<SocketInterface>& ifs,
       server = (server + 1) % ifs.size();
     }
     cout << "sending request on server_" << server << endl;
-    unsigned index = index_queue.front();
-    index_queue.pop();
+    unsigned index = index_deque.front();
+    index_deque.pop_front();
     //cout << index << endl;
     // push request
     pthread_mutex_lock(&ifs[server].lock);
@@ -311,7 +311,7 @@ int stream_data_non_blocking_deque(vector<SocketInterface>& ifs,
   // for now just evenly spread requests across servers
   unsigned server = 0;
   //for(unsigned index = 0; index < num_frames; index++)
-  while(index_queue.front() != MAX_FRAME)
+  while(index_deque.front() != MAX_FRAME)
   {
     // find a request thread with space in its queue
     while(ifs[server].frame_reqs.size() == max_queue_size)
@@ -319,7 +319,7 @@ int stream_data_non_blocking_deque(vector<SocketInterface>& ifs,
       server = (server + 1) % ifs.size();
     }
     cout << "sending request on server_" << server << endl;
-    unsigned index = index_queue.front();
+    unsigned index = index_deque.front();
     index_deque.pop_front();
     //cout << index << endl;
     // push request
@@ -352,7 +352,7 @@ void* server_thread(void *intf)
 
   // set thread to ready
   i->ready = 1;
-  
+
   // keep a timeout counter
   int timeout_count = 0;
 
@@ -404,7 +404,7 @@ void* server_thread(void *intf)
           continue;
         }
         else{
-          //index_queue.push(outstanding_frames.front());
+          //index_deque.push(outstanding_frames.front());
           index_deque.push_front(outstanding_frames.front());
           outstanding_frames.pop();
           continue;
@@ -418,7 +418,7 @@ void* server_thread(void *intf)
       if(frame == outstanding_frames.front())
       {
         outstanding_frames.pop();
-        while(outstanding_frames.size() && 
+        while(outstanding_frames.size() &&
               oo_frames.find(outstanding_frames.front()) != oo_frames.end())
         {
           oo_frames.erase(outstanding_frames.front());
