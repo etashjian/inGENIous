@@ -28,6 +28,7 @@ unsigned max_queue_size = DEFAULT_MAX_QUEUE_SIZE;
 unsigned num_frames = 0;
 
 //std::queue<unsigned> index_queue;
+pthread_mutex_t deque_lock = PTHREAD_MUTEX_INITIALIZER;
 std::deque<unsigned> index_deque;
 
 ////////////////////////////////////////////////////////////////////////////////

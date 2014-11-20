@@ -272,8 +272,10 @@ int stream_data_non_blocking_queue(vector<SocketInterface>& ifs,
       server = (server + 1) % ifs.size();
     }
     cout << "sending request on server_" << server << endl;
+    pthread_mutex_lock(&deque_lock);
     unsigned index = index_deque.front();
     index_deque.pop_front();
+    pthread_mutex_unlock(&deque_lock);
     //cout << index << endl;
     // push request
     pthread_mutex_lock(&ifs[server].lock);
@@ -319,8 +321,10 @@ int stream_data_non_blocking_deque(vector<SocketInterface>& ifs,
       server = (server + 1) % ifs.size();
     }
     cout << "sending request on server_" << server << endl;
+    pthread_mutex_lock(&deque_lock);
     unsigned index = index_deque.front();
     index_deque.pop_front();
+    pthread_mutex_unlock(&deque_lock);
     //cout << index << endl;
     // push request
     pthread_mutex_lock(&ifs[server].lock);
@@ -405,7 +409,9 @@ void* server_thread(void *intf)
         }
         else{
           //index_deque.push(outstanding_frames.front());
+          pthread_mutex_lock(&deque_lock);
           index_deque.push_front(outstanding_frames.front());
+          pthread_mutex_unlock(&deque_lock);
           outstanding_frames.pop();
           continue;
         }
