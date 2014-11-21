@@ -5,7 +5,7 @@
  * \brief Definitions for scheduler classes for dynamically picking servers
  *----------------------------------------------------------------------------*/
 
-#include "Scheduler.hpp"
+#include "Scheduler.h"
 
 ////////////////////////////////////////////////////////////////////////////////
 // SCHEDULER

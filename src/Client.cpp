@@ -303,30 +303,35 @@ int stream_data_non_blocking_deque(vector<SocketInterface>& ifs,
     cerr << "FAILED TO INITIALIZE REFERENCE TIME\n";
     return -1;
   }
-  //queue<unsigned> request_queue;
+
   // set up queue of requests
   for(unsigned index = 0; index < num_frames; index++)
   {
     index_deque.push_back(index);
   }
   index_deque.push_back(MAX_FRAME);
+
+  // set up scheduler
+  Scheduler *sched = new SimpleSched(ifs.size(), 50);
+
   // for now just evenly spread requests across servers
   unsigned server = 0;
-  //for(unsigned index = 0; index < num_frames; index++)
   while(index_deque.front() != MAX_FRAME)
   {
     // find a request thread with space in its queue
     while(ifs[server].frame_reqs.size() == max_queue_size)
     {
-      server = (server + 1) % ifs.size();
+      server = sched->pick_server();
     }
     cout << "sending request on server_" << server << endl;
+
+    // get index from deque
     pthread_mutex_lock(&deque_lock);
     unsigned index = index_deque.front();
     index_deque.pop_front();
     pthread_mutex_unlock(&deque_lock);
-    //cout << index << endl;
-    // push request
+
+    // give index to thread
     pthread_mutex_lock(&ifs[server].lock);
     ifs[server].frame_reqs.push(index);
     pthread_mutex_unlock(&ifs[server].lock);
@@ -340,6 +345,7 @@ int stream_data_non_blocking_deque(vector<SocketInterface>& ifs,
     ifs[i].ready = 0;
   }
 
+  delete sched;
   return 0; // exit successfully
 }
 
@@ -352,7 +358,6 @@ void* server_thread(void *intf)
   queue<unsigned> outstanding_frames;
   unordered_set<unsigned> oo_frames;
   unsigned window_size = init_window_size;
-  //cout << window_size << endl;
 
   // set thread to ready
   i->ready = 1;

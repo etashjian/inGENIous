@@ -30,6 +30,13 @@ class Scheduler
     , server_tickets(num_servers, tickets_per_server)
     {}
 
+
+  /**
+   * \fn ~Scheduler()
+   * \brief Virtual destructor
+   */  
+  virtual ~Scheduler() {}
+
   /**
    * \fn unsigned pick_server()
    * \brief Draws lottery number and picks corresponding server
@@ -69,7 +76,7 @@ class Scheduler
  * \class SimpleSched
  * \brief Basic scheduler for testing. Probably not worth much
  */
-class SimpleSched : Scheduler
+class SimpleSched : public Scheduler
 {
  public:
   /**

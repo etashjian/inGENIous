@@ -8,6 +8,7 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
+#include "Scheduler.h"
 #include "Socket.h"
 #include "Common.h"
 #include <iostream>
