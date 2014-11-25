@@ -24,7 +24,7 @@
 ////////////////////////////////////////////////////////////////////////////////
 struct timeval start_time; /// Reference time
 unsigned init_window_size = DEFAULT_INIT_WINDOW_SIZE;
-unsigned max_queue_size = DEFAULT_MAX_QUEUE_SIZE;
+unsigned init_queue_size = DEFAULT_MAX_QUEUE_SIZE;
 unsigned num_frames = 0;
 
 //std::queue<unsigned> index_queue;
@@ -46,7 +46,7 @@ struct SocketInterface
   unsigned id = 0; /// Id of thread
   unsigned ready = 0; /// Indicates socket is ready for use
   unsigned error = 0; /// Indicates an error occurred in thread
-  unsigned file_size = 0; /// size of file on server
+  unsigned queue_size = 0; 
   pthread_mutex_t lock = PTHREAD_MUTEX_INITIALIZER;
   pthread_cond_t full = PTHREAD_COND_INITIALIZER;
   pthread_cond_t empty = PTHREAD_COND_INITIALIZER;

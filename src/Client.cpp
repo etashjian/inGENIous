@@ -95,7 +95,7 @@ int parse_cmdline(int argc, char **argv)
         break;
 
       case 'q':
-        max_queue_size = atoi(optarg);
+        init_queue_size = atoi(optarg);
         break;
 
       case '?':
@@ -136,7 +136,7 @@ int parse_config_file(const char *filename, vector<ClientSocket>& sockets)
 
     // create corresponding socket
     sockets.push_back(ClientSocket(atoi(port.c_str()), hostname.c_str()));
-    if(sockets.back().init() || sockets.back().configure_timeout(2, 0))
+    if(sockets.back().init() || sockets.back().configure_timeout(1, 0))
       return -1;
   }
 
@@ -153,6 +153,7 @@ int start_servers(vector<SocketInterface>& ifs,
   for(unsigned i = 0; i < sockets.size(); i++)
   {
     ifs[i].id = i;
+    ifs[i].queue_size = init_queue_size;
     ifs[i].socket = &sockets[i];
     rc = pthread_create(&threads[i], nullptr, server_thread, (void*) &ifs[i]);
     if(rc)
@@ -182,7 +183,7 @@ int stream_data(vector<SocketInterface>& ifs,
   {
     // push request
     pthread_mutex_lock(&ifs[server].lock);
-    while(ifs[server].frame_reqs.size() == max_queue_size)
+    while(ifs[server].frame_reqs.size() >= ifs[server].queue_size)
     {
       pthread_cond_wait(&ifs[server].full, &ifs[server].lock);
     }
@@ -220,7 +221,7 @@ int stream_data_non_blocking(vector<SocketInterface>& ifs,
   for(unsigned index = 0; index < num_frames; index++)
   {
     // find a request thread with space in its queue
-    while(ifs[server].frame_reqs.size() == max_queue_size)
+    while(ifs[server].frame_reqs.size() >= ifs[server].queue_size)
     {
       server = (server + 1) % ifs.size();
     }
@@ -267,7 +268,7 @@ int stream_data_non_blocking_queue(vector<SocketInterface>& ifs,
   while(index_deque.front() != MAX_FRAME)
   {
     // find a request thread with space in its queue
-    while(ifs[server].frame_reqs.size() == max_queue_size)
+    while(ifs[server].frame_reqs.size() >= ifs[server].queue_size)
     {
       server = (server + 1) % ifs.size();
     }
@@ -316,7 +317,7 @@ int stream_data_non_blocking_deque(vector<SocketInterface>& ifs,
   while(index_deque.front() != MAX_FRAME)
   {
     // find a request thread with space in its queue
-    while(ifs[server].frame_reqs.size() == max_queue_size)
+    while(ifs[server].frame_reqs.size() >= ifs[server].queue_size)
     {
       server = (server + 1) % ifs.size();
     }
@@ -352,7 +353,7 @@ void* server_thread(void *intf)
   queue<unsigned> outstanding_frames;
   unordered_set<unsigned> oo_frames;
   unsigned window_size = init_window_size;
-  //cout << window_size << endl;
+  unsigned max_window_size = 10;
 
   // set thread to ready
   i->ready = 1;
@@ -400,6 +401,9 @@ void* server_thread(void *intf)
       bzero(rec_buf, RESP_PKT_SIZE);
       if(i->socket->receive(rec_buf, RESP_PKT_SIZE))
       {
+        // decrease window on timeout
+        window_size = window_size / 2;
+
         // for now just resend first in line pkt
         if(RESEND){
           if(request_frame(i, outstanding_frames.front())) pthread_exit(nullptr);
@@ -436,6 +440,9 @@ void* server_thread(void *intf)
       {
         oo_frames.insert(frame);
       }
+
+      // increase window
+      if(window_size < max_window_size) window_size++;
 
       // record time stamp (printed to std err)
       log_frame(frame);
