@@ -35,6 +35,10 @@ int ClientSocket::init()
   server.sin_port = htons(port);
   length = sizeof(struct sockaddr_in);
 
+  int sendbuff;
+  socklen_t optlen = sizeof(sendbuff);
+  int res = getsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuff, &optlen);
+  cout << sendbuff << endl;
   // return succesfully
   return 0;
 }
@@ -70,7 +74,7 @@ int ClientSocket::receive(char *buf, size_t buf_size)
   int rc = recvfrom(sock,buf,buf_size,0,(struct sockaddr *)&from, &length);
   if (rc < 0)
   {
-    perror("recvfrom");
+    //perror("recvfrom");
     return -1;
   }
 

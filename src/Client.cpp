@@ -353,7 +353,7 @@ void* server_thread(void *intf)
   queue<unsigned> outstanding_frames;
   unordered_set<unsigned> oo_frames;
   unsigned window_size = init_window_size;
-  unsigned max_window_size = 10;
+  unsigned max_window_size = 40;
 
   // set thread to ready
   i->ready = 1;
@@ -401,24 +401,17 @@ void* server_thread(void *intf)
       bzero(rec_buf, RESP_PKT_SIZE);
       if(i->socket->receive(rec_buf, RESP_PKT_SIZE))
       {
+        cout << "Server " << i->id << " timed out on pkt " << outstanding_frames.front() << endl;
+
         // decrease window on timeout
         window_size = window_size / 2;
 
-        // for now just resend first in line pkt
-        if(RESEND){
-          if(request_frame(i, outstanding_frames.front())) pthread_exit(nullptr);
-          timeout_count++;
-          cout << "timeout " << timeout_count << endl;
-          continue;
-        }
-        else{
-          //index_deque.push(outstanding_frames.front());
-          pthread_mutex_lock(&deque_lock);
-          index_deque.push_front(outstanding_frames.front());
-          pthread_mutex_unlock(&deque_lock);
-          outstanding_frames.pop();
-          continue;
-        }
+        //index_deque.push(outstanding_frames.front());
+        pthread_mutex_lock(&deque_lock);
+        index_deque.push_front(outstanding_frames.front());
+        pthread_mutex_unlock(&deque_lock);
+        outstanding_frames.pop();
+        continue;
       }
 
       // remove frame from outstanding packets
@@ -447,6 +440,8 @@ void* server_thread(void *intf)
       // record time stamp (printed to std err)
       log_frame(frame);
     }
+
+    i->queue_size = window_size;
   }
 
   pthread_exit(nullptr);
