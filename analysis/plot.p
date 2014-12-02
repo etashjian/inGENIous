@@ -9,7 +9,8 @@ set xlabel "Time (seconds)"
 set ylabel "Frame Number"
 set key l
 #set xr [0:6]
-set yr [0:1000]
+set yr [0:30000]
 
-plot "non_blocking.5.data", 10 * (x-0),20 * (x-0),30 * (x-0),40 * (x-0),50 * (x-0),60 * (x-0),70 * (x-0),80 * (x-0),90 * (x-0),100 * (x-0)
+plot "data/ScenarioA", "data/B_S0_VM2", 10 * (x-1),20 * (x-1),30 * (x-1),40 * (x-1),50 * (x-1),60 * (x-1),70 * (x-1),80 * (x-1),90 * (x-1),100 * (x-1)
+
 pause -1
