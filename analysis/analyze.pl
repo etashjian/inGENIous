@@ -24,11 +24,13 @@ print "max Frame #: $maxFrame\n";
 my $maxTime = max @times;
 print "max Time: $maxTime\n";
 print "min Time: $minTime\n";
+print "Rate,bmax,Start Time\n";
 use POSIX qw (ceil);
 $minTime = ceil($minTime);
 for (my $j = 10; $j <= 100; $j+=10){
 	my $rate = $j;
 	my $startTime = max ($maxTime - (($maxFrame+1)/$rate),$minTime);
+	$startTime = ceil($startTime);
 	# make sure line is valid
 	my $test = 1;
 	while($test){
@@ -58,8 +60,9 @@ for (my $j = 10; $j <= 100; $j+=10){
 	}
 	#print @buffSizes;
 	my $bmax = max(@buffSizes);
-	print "bmax for $rate * (x-$startTime) is $bmax\n";
-	#print "$rate * (x-$startTime),";
+	#print "bmax for $rate * (x-$startTime) is $bmax\n";
+	#print "$rate,$bmax,$startTime\n";
+	print "$rate * (x-$startTime),";
 }
 print"\n";
 
