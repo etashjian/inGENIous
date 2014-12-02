@@ -37,7 +37,7 @@ int main(int argc, char **argv)
 
   // stream file
   cout << "Streaming file... " << flush;
-  if (stream_data_non_blocking_queue(ifs, threads))
+  if (stream_data_non_blocking_deque(ifs, threads))
   {
     cerr << "Failed to stream file!\n";
     exit(-1);
@@ -321,7 +321,7 @@ int stream_data_non_blocking_deque(vector<SocketInterface>& ifs,
     {
       server = (server + 1) % ifs.size();
     }
-    cout << "sending request on server_" << server << endl;
+    //cout << "sending request on server_" << server << endl;
     pthread_mutex_lock(&deque_lock);
     unsigned index = index_deque.front();
     index_deque.pop_front();
@@ -353,7 +353,7 @@ void* server_thread(void *intf)
   queue<unsigned> outstanding_frames;
   unordered_set<unsigned> oo_frames;
   unsigned window_size = init_window_size;
-  unsigned max_window_size = 40;
+  unsigned max_window_size = 10;
 
   // set thread to ready
   i->ready = 1;
@@ -367,13 +367,13 @@ void* server_thread(void *intf)
     // if window not full and packets available, get/send them
     if(outstanding_frames.size() < window_size && !i->frame_reqs.empty())
     {
-      //cout << "thread " << intf << " sending request" << endl;
       // get frame from queue
       pthread_mutex_lock(&i->lock);
       frame = i->frame_reqs.front();
       i->frame_reqs.pop();
       pthread_mutex_unlock(&i->lock);
       pthread_cond_signal(&i->full);
+      cout << "thread " << i->id << " sending request " << frame << ":" << window_size << endl;
 
       // build/send request packet
       if(request_frame(i, frame)) pthread_exit(nullptr);
@@ -404,18 +404,25 @@ void* server_thread(void *intf)
         cout << "Server " << i->id << " timed out on pkt " << outstanding_frames.front() << endl;
 
         // decrease window on timeout
-        window_size = window_size / 2;
+        //window_size = window_size / 2;
+        //window_size--;
 
-        //index_deque.push(outstanding_frames.front());
         pthread_mutex_lock(&deque_lock);
         index_deque.push_front(outstanding_frames.front());
         pthread_mutex_unlock(&deque_lock);
         outstanding_frames.pop();
+        while(outstanding_frames.size() &&
+              oo_frames.find(outstanding_frames.front()) != oo_frames.end())
+        {
+          oo_frames.erase(outstanding_frames.front());
+          outstanding_frames.pop();
+        }
         continue;
       }
 
       // remove frame from outstanding packets
       memcpy(&frame, rec_buf, sizeof(unsigned));
+      cout << "Received frame: " << frame << endl;
 
       // if frame received is next in order
       if(frame == outstanding_frames.front())
