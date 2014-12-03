@@ -1,1 +1,17 @@
-README stuff
+To build the project, run make from root directory.
+
+Each server vm runs the Server binary found in the bin folder with a specified port number.
+ex. bin/Server 8025
+
+Each server ip address and port number is stored in Configuration/server.cfg for the Client. It is extremely important this information is correct.
+
+The Client binary is run from client machine. The Client program takes three arguments. -n indicates the number of frames to transmit, -w species starting window size, and -q specifies starting queue size. Frames and their receive times are printed to stderr. To generate our logs the following command as used.
+
+bin/Client -n 30000 -w 2 -q 2 2> log
+
+The logs are formated with one frame per line in the follwing format
+<Frame receive time in seconds> <frame index>
+
+The logs are run through remove_duplicates.pl scripts found in analysis/data folder to remove any duplicate frames received (this happens on a timeout where a frame is very delayed, but eventually makes it to the client). The final log then has exactly 30000 lines, one for each frame.
+
+All logs can be found in the analysis/data directory. The log files are named with the scenario letter, and the names of the vms that congestion is placed between. For scenarios C and D it uses the vms with 32KBs link between them. Note, there are two version of each log, one appended with _MA, and one without. Our results report data from the logs with _MA appended.
