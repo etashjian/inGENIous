@@ -136,7 +136,7 @@ int parse_config_file(const char *filename, vector<ClientSocket>& sockets)
 
     // create corresponding socket
     sockets.push_back(ClientSocket(atoi(port.c_str()), hostname.c_str()));
-    if(sockets.back().init() || sockets.back().configure_timeout(1, 0))
+    if(sockets.back().init() || sockets.back().configure_timeout(0, 500000))
       return -1;
   }
 
