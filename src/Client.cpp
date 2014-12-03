@@ -400,7 +400,7 @@ void* server_thread(void *intf)
       {
         // decrease window on timeout
         window_size = window_size / 2;
-        if(window_size < 1) window_size = 1;
+        if(window_size < 2) window_size = 2;
 
         pthread_mutex_lock(&deque_lock);
         index_deque.push_front(outstanding_frames.front());
@@ -499,6 +499,8 @@ double moving_average(unsigned window, list<double>& rates)
     rates.pop_front();
   }
 
+  if(rates.size() == 1) return 1000;
+
   double last = 0;
   double average = 0;
   for(double time : rates)
@@ -507,7 +509,7 @@ double moving_average(unsigned window, list<double>& rates)
     last = time;
   }
 
-  return average / rates.size();
+  return average / (rates.size() - 1);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
