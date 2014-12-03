@@ -61,8 +61,8 @@ for (my $j = 10; $j <= 100; $j+=10){
 	#print @buffSizes;
 	my $bmax = max(@buffSizes);
 	#print "bmax for $rate * (x-$startTime) is $bmax\n";
-	#print "$rate,$bmax,$startTime\n";
-	print "$rate * (x-$startTime),";
+	print "$rate,$bmax,$startTime\n";
+	#print "$rate * (x-$startTime),";
 }
 print"\n";
 
