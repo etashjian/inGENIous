@@ -353,13 +353,13 @@ void* server_thread(void *intf)
   queue<unsigned> outstanding_frames;
   unordered_set<unsigned> oo_frames;
   unsigned window_size = init_window_size;
-  unsigned max_window_size = 10;
+  unsigned skip_count = 0;
+  double last_avg = 1000;
+
+  list<double> rates;
 
   // set thread to ready
   i->ready = 1;
-
-  // keep a timeout counter
-  int timeout_count = 0;
 
   // keep waiting for packets until client signals close
   while(1)
@@ -373,7 +373,6 @@ void* server_thread(void *intf)
       i->frame_reqs.pop();
       pthread_mutex_unlock(&i->lock);
       pthread_cond_signal(&i->full);
-      cout << "thread " << i->id << " sending request " << frame << ":" << window_size << endl;
 
       // build/send request packet
       if(request_frame(i, frame)) pthread_exit(nullptr);
@@ -384,7 +383,6 @@ void* server_thread(void *intf)
     // if no frames outstanding and no requests, wait
     else if(outstanding_frames.empty() && i->frame_reqs.empty())
     {
-      //cout << "thread " << intf << " going to sleep" << endl;
       pthread_mutex_lock(&i->lock);
       while(i->frame_reqs.empty() && i->ready)
       {
@@ -396,16 +394,13 @@ void* server_thread(void *intf)
     // otherwise wait for packets
     else
     {
-      //cout << "thread " << intf << " wait for packet" << endl;
       // get packet
       bzero(rec_buf, RESP_PKT_SIZE);
       if(i->socket->receive(rec_buf, RESP_PKT_SIZE))
       {
-        cout << "Server " << i->id << " timed out on pkt " << outstanding_frames.front() << endl;
-
         // decrease window on timeout
-        //window_size = window_size / 2;
-        //window_size--;
+        window_size = window_size / 2;
+        if(window_size < 1) window_size = 1;
 
         pthread_mutex_lock(&deque_lock);
         index_deque.push_front(outstanding_frames.front());
@@ -422,7 +417,6 @@ void* server_thread(void *intf)
 
       // remove frame from outstanding packets
       memcpy(&frame, rec_buf, sizeof(unsigned));
-      cout << "Received frame: " << frame << endl;
 
       // if frame received is next in order
       if(frame == outstanding_frames.front())
@@ -441,8 +435,17 @@ void* server_thread(void *intf)
         oo_frames.insert(frame);
       }
 
-      // increase window
-      if(window_size < max_window_size) window_size++;
+      double avg = moving_average(window_size, rates);
+      cout << i->id << ":" << window_size << ":" << last_avg << ":" << avg << endl;
+      if(skip_count < 2)
+      {
+        skip_count++; // GENI sockets do weird stuff at first, ignore this
+      }
+      else if(avg + 0.004 < last_avg)
+      {
+        window_size++;
+      }
+      last_avg = avg;
 
       // record time stamp (printed to std err)
       log_frame(frame);
@@ -478,6 +481,33 @@ void log_frame(unsigned frame)
         (double)start_time.tv_sec - (double)start_time.tv_usec * .000001
      << " " << frame << endl;
   cerr << ss.str();
+}
+
+////////////////////////////////////////////////////////////////////////////////
+double moving_average(unsigned window, list<double>& rates)
+{
+  struct timeval time;
+  if(gettimeofday(&time, nullptr))
+  {
+    cerr << "FAILED TO READ WALL TIME!\n";
+    pthread_exit(nullptr);
+  }
+  rates.push_back((double) time.tv_sec + (double) time.tv_usec * .000001);
+
+  while(rates.size() > window)
+  {
+    rates.pop_front();
+  }
+
+  double last = 0;
+  double average = 0;
+  for(double time : rates)
+  {
+    if(last) average += time - last;
+    last = time;
+  }
+
+  return average / rates.size();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -35,10 +35,6 @@ int ClientSocket::init()
   server.sin_port = htons(port);
   length = sizeof(struct sockaddr_in);
 
-  int sendbuff;
-  socklen_t optlen = sizeof(sendbuff);
-  int res = getsockopt(sock, SOL_SOCKET, SO_SNDBUF, &sendbuff, &optlen);
-  cout << sendbuff << endl;
   // return succesfully
   return 0;
 }

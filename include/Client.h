@@ -14,6 +14,7 @@
 #include <fstream>
 #include <vector>
 #include <queue>
+#include <list>
 #include <set>
 #include <unordered_set>
 #include <pthread.h>
@@ -124,5 +125,6 @@ void* server_thread(void *intf);
  */
  void log_frame(unsigned frame);
 
+double moving_average(unsigned window, std::list<double>& rates);
 ////////////////////////////////////////////////////////////////////////////////
 #endif
